@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>الحوكمة الذكية - جامعة القصيم</title>
+</head>
+
+<body style="margin:0; padding:20px; background:#f3f3f3; font-family: 'Segoe UI', Tahoma, sans-serif;">
+
+<!-- تحميل مكتبة WebChat من مايكروسوفت -->
+<script src="https://cdn.botframework.com/botframework-webchat/latest/webchat.js"></script>
+
+<style>
+    /* غلاف الشات */
+    #chat-container {
+        width: 100%;
+        max-width: 100%;     
+        height: 80vh;
+        background: #ffffff;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        margin: 0;           
+    }
+
+    #chat-container #webchat {
+        width: 100%;
+        max-width: 100% !important;
+        margin: 0 !important;
+        height: 100%;
+    }
+
+    #chatbot-header {
+        background: #1a7344;
+        color: #ffffff;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .header-avatar {
+        width: 32px;
+        height: 32px;
+        background-color: #ffffff;
+        color: #1a7344;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 13px;
+    }
+
+    #webchat {
+        flex: 1;
+        width: 100%;
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    #webchat *::-webkit-scrollbar {
+        width: 8px;
+    }
+    #webchat *::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    #webchat *::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+    .disclaimer-bar {
+        background-color: #ffffff;
+        color: #666;
+        font-size: 11px;
+        text-align: center;
+        padding: 8px 15px;
+        border-top: 1px solid #eee;
+        line-height: 1.4;
+    }
+
+    #webchat a {
+        color: #1a7344 !important; 
+        text-decoration: underline !important; 
+        font-weight: bold !important;
+    }
+
+    #webchat a:hover {
+        color: #004d40 !important; 
+    }    
+</style>
+
+<div id="chat-container" dir="rtl">
+    <div id="chatbot-header">
+        <div class="header-avatar">QU</div>
+        <span>الحوكمة الذكية - جامعة القصيم</span>
+    </div>
+    <div id="webchat" role="main"></div>
+    <div class="disclaimer-bar">
+        هذه الخدمة أداة استرشادية تعمل بالذكاء الاصطناعي للمساعدة فقط، جمله هنا اضافية.
+    </div>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    const TOKEN_ENDPOINT =
+        "https://defaultc2b04da6848741cc880390321048a7.72.environment.api.powerplatform.com/copilotstudio/dataverse-backed/authenticated/bots/crb4e_PxNE7juKS1xXOivCGCBhp/conversations?api-version=2022-03-01-preview";
+
+const styleOptions = {
+    accent: "#1a7344",
+    primaryFont: "'Segoe UI', Tahoma, sans-serif",
+    bubbleBackground: "#f5f5f5",
+    bubbleTextColor: "#242424",
+    bubbleFromUserBackground: "#1a7344",
+    bubbleFromUserTextColor: "#ffffff",
+    hideUploadButton: true,
+    bubbleBorderRadius: 12,
+    bubbleFromUserBorderRadius: 12,
+    botAvatarInitials: "QU",
+    botAvatarBackgroundColor: "#1a7344",
+    avatarSize: 36,
+    sendBoxHeight: 50,
+    sendBoxButtonColor: "#1a7344",
+    transcriptMaxWidth: "100%" ,
+    sendBoxMaxWidth: "100%"
+};
+
+    function createCustomStore() {
+        return window.WebChat.createStore(
+            {},
+            ({ dispatch }) =>
+                next =>
+                    action => {
+                        if (action.type === "DIRECT_LINE/CONNECT_FULFILLED") {
+                            dispatch({
+                                type: "DIRECT_LINE/POST_ACTIVITY",
+                                meta: { method: "keyboard" },
+                                payload: {
+                                    activity: {
+                                        type: "event",
+                                        name: "startConversation",
+                                        channelData: { postBack: true }
+                                    }
+                                }
+                            });
+                        }
+
+                        return next(action);
+                    }
+        );
+    }
+
+    async function initializeChat() {
+        try {
+            const url = new URL(TOKEN_ENDPOINT);
+            const apiVersion = url.searchParams.get("api-version");
+            const environmentEndPoint = url.origin;
+
+            const regionalChannelSettingsURL =
+                environmentEndPoint +
+                `/powervirtualagents/regionalchannelsettings?api-version=${apiVersion}`;
+
+            const settingsResponse = await fetch(regionalChannelSettingsURL);
+            const settingsData = await settingsResponse.json();
+            const directLineUrl = settingsData.channelUrlsById.directline;
+
+            const conversationResponse = await fetch(TOKEN_ENDPOINT);
+            const conversationInfo = await conversationResponse.json();
+
+            const directLine = window.WebChat.createDirectLine({
+                domain: `${directLineUrl}v3/directline`,
+                token: conversationInfo.token
+            });
+
+            window.WebChat.renderWebChat(
+                {
+                    directLine,
+                    styleOptions,
+                    store: createCustomStore(),
+                    locale: "ar-SA"
+                },
+                document.getElementById("webchat")
+            );
+        } catch (err) {
+            console.error("فشل الاتصال بالآيجنت:", err);
+            const container = document.getElementById("webchat");
+            if (container) {
+                container.innerHTML =
+                    '<div style="padding:20px; text-align:center;">حدث خطأ في تحميل الحوكمة الذكية ، حاول تحديث الصفحة لاحقًا.</div>';
+            }
+        }
+    }
+
+    function checkAndStart() {
+        if (window.WebChat && typeof window.WebChat.renderWebChat === "function") {
+            initializeChat();
+        } else {
+            setTimeout(checkAndStart, 1000);
+        }
+    }
+
+    if (document.readyState === "complete") {
+        checkAndStart();
+    } else {
+        window.addEventListener("load", checkAndStart);
+    }
+})();
+</script>
+
+</body>
+</html>
