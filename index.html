@@ -36,6 +36,16 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 .msg.bot .msg-body strong{font-weight:600}
 .msg.bot .msg-body h1,.msg.bot .msg-body h2,.msg.bot .msg-body h3{font-weight:600;margin:12px 0 6px}
 
+/* تنسيق الروابط القابلة للنقر */
+.msg.bot .msg-body a {
+    color: #1a7344;
+    text-decoration: underline;
+    word-break: break-all;
+}
+.msg.bot .msg-body a:hover {
+    color: #0e4d2e;
+}
+
 #quick-replies-bar{padding:8px 16px 0;display:flex;flex-wrap:wrap;gap:8px;direction:rtl;background:#fff;flex-shrink:0}
 #quick-replies-bar:empty{display:none}
 .qr-btn{background:#fff;border:1.5px solid #1a7344;color:#1a7344;padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;line-height:1.4}
@@ -49,7 +59,6 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 
 #input-area{padding:10px 16px 14px;border-top:1px solid #eee;display:flex;gap:10px;align-items:flex-end;flex-shrink:0;background:#fff}
 #msg-input{flex:1;border:1px solid #ddd;border-radius:22px;padding:11px 18px;font-size:15px;resize:none;max-height:120px;outline:none;background:#f9f9f9;color:#1a1a1a;font-family:inherit;line-height:1.5;transition:border-color .2s}
-/* إزالة direction:rtl الثابت من هنا */
 #msg-input:focus{border-color:#1a7344;background:#fff}
 #send-btn{width:42px;height:42px;background:#1a7344;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .2s}
 #send-btn:hover{opacity:.85}
@@ -68,7 +77,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
   <div id="quick-replies-bar"></div>
   <div id="input-area">
     <button id="send-btn" aria-label="إرسال" disabled>
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 20l19-8L3 4v5l13 3-13 3z"/></svg>
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 20l19-8L3 4v5l13 3-13 3z"/></path></svg>
     </button>
     <textarea id="msg-input" rows="1" placeholder="جارٍ الاتصال..." disabled></textarea>
   </div>
@@ -89,69 +98,87 @@ const sendBtn = document.getElementById("send-btn");
 let dlUrl = null, token = null, conversationId = null, watermark = null, waiting = false;
 const seenActivityIds = new Set();
 
-// ========== الوظيفة الجديدة: تحديد اتجاه الكتابة حسب أول حرف عربي ==========
+// ========== دالة تحويل النص إلى روابط قابلة للنقر ==========
+function convertLinksToHTML(text) {
+    // نمط للبحث عن الروابط (http://, https://, www.)
+    const urlPattern = /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,?!:;'")\]}])/gi;
+    
+    return text.replace(urlPattern, function(url) {
+        let href = url;
+        // إذا كان الرابط يبدأ بـ www. نضيف https://
+        if (href.startsWith('www.')) {
+            href = 'https://' + href;
+        }
+        // نحرص على عدم وجود أقواس زائدة في نهاية الرابط
+        href = href.replace(/[.,?!:;'")\]}]+$/, '');
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+    });
+}
+
+// ========== دالة تحويل الماركداون مع دعم الروابط ==========
+function renderMarkdown(text) {
+    // أولاً: تحويل الروابط إلى HTML
+    let html = convertLinksToHTML(text);
+    
+    // ثانياً: تحويل علامات الماركداون
+    html = html
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+        .replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
+        .replace(/\*(.*?)\*/g,"<em>$1</em>")
+        .replace(/^#{3}\s(.+)/gm,"<h3>$1</h3>")
+        .replace(/^#{2}\s(.+)/gm,"<h2>$1</h2>")
+        .replace(/^#{1}\s(.+)/gm,"<h1>$1</h1>")
+        .replace(/^[-*]\s(.+)/gm,"<li>$1</li>")
+        .replace(/(<li>[\s\S]*?<\/li>)/g,"<ul>$1</ul>")
+        .replace(/<\/ul>\s*<ul>/g,"");
+    
+    // معالجة الفقرات
+    html = html.split(/\n\n+/).map(block => {
+        if(/^<[huola]/.test(block.trim())) return block;
+        return "<p>" + block.replace(/\n/g,"<br>") + "</p>";
+    }).join("");
+    
+    return html;
+}
+// ====================================================
+
+// ========== تحديث اتجاه الكتابة في حقل الإدخال ==========
 function updateInputDirection() {
     let text = input.value;
     if (!text || text.trim() === "") {
-        // في حالة عدم وجود نص، اجعل الاتجاه rtl (افتراضي لأن الواجهة عربية)
         input.style.direction = "rtl";
         input.style.textAlign = "right";
         return;
     }
     
-    // الكشف عن وجود أحرف عربية في بداية النص (تجاهل المسافات الأولية)
     let trimmedText = text.trimStart();
     let firstChar = trimmedText.charAt(0);
-    
-    // نطاق الأحرف العربية
     const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
     
     if (arabicRegex.test(firstChar)) {
-        // عربي: من اليمين لليسار
         input.style.direction = "rtl";
         input.style.textAlign = "right";
     } else {
-        // إنجليزي أو رقم: من اليسار لليمين
         input.style.direction = "ltr";
         input.style.textAlign = "left";
     }
 }
-// ربط الوظيفة بأحداث الكتابة
+
 input.addEventListener("input", updateInputDirection);
-// أيضاً عند التركيز أو تغيير المحتوى يدوياً
 input.addEventListener("focus", updateInputDirection);
-// =================================================================
+setTimeout(updateInputDirection, 100);
+// ====================================================
 
 function autoResize(){
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 120) + "px";
 }
 input.addEventListener("input", autoResize);
-// تحديث الاتجاه أول مرة بعد تحميل الصفحة (بعد أن يصبح جاهزاً)
-setTimeout(updateInputDirection, 100);
 
 function isRTL(text){
   const rtl = (text.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g)||[]).length;
   const ltr = (text.match(/[a-zA-Z]/g)||[]).length;
   return rtl >= ltr;
-}
-
-function renderMarkdown(text){
-  let html = text
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
-    .replace(/\*(.*?)\*/g,"<em>$1</em>")
-    .replace(/^#{3}\s(.+)/gm,"<h3>$1</h3>")
-    .replace(/^#{2}\s(.+)/gm,"<h2>$1</h2>")
-    .replace(/^#{1}\s(.+)/gm,"<h1>$1</h1>")
-    .replace(/^[-*]\s(.+)/gm,"<li>$1</li>")
-    .replace(/(<li>[\s\S]*?<\/li>)/g,"<ul>$1</ul>")
-    .replace(/<\/ul>\s*<ul>/g,"");
-  html = html.split(/\n\n+/).map(block => {
-    if(/^<[huo]/.test(block.trim())) return block;
-    return "<p>" + block.replace(/\n/g,"<br>") + "</p>";
-  }).join("");
-  return html;
 }
 
 function setQuickReplies(actions){
