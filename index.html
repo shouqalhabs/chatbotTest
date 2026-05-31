@@ -31,8 +31,10 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 .msg.bot .msg-body h1,.msg.bot .msg-body h2,.msg.bot .msg-body h3{font-weight:600;margin:12px 0 6px}
 .msg.bot .msg-body a{color:#1a7344;text-decoration:underline;word-break:break-all}
 .msg.bot .msg-body a:hover{color:#0e4d2e}
-.cite-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:#e8f5ee;color:#1a7344;border:1px solid #1a7344;border-radius:10px;font-size:11px;font-weight:700;vertical-align:super;line-height:1;cursor:pointer;text-decoration:none!important;transition:background .15s,color .15s}
-.cite-badge:hover{background:#1a7344;color:#fff}
+.cite-badge{display:inline;background:none;color:#1a7344;border:none;border-radius:0;font-size:inherit;font-weight:700;vertical-align:super;line-height:1;cursor:pointer;text-decoration:none!important;font-size:12px;padding:0}
+.cite-badge::before{content:"["}
+.cite-badge::after{content:"]"}
+.cite-badge:hover{text-decoration:underline!important;color:#0e4d2e}
 .refs-section{margin-top:12px;border-top:1px solid #e5e5e5;padding-top:8px;direction:rtl}
 .refs-toggle{background:none;border:none;cursor:pointer;color:#888;font-size:13px;font-family:inherit;display:flex;align-items:center;gap:6px;padding:2px 0}
 .refs-toggle:hover{color:#1a7344}
@@ -41,7 +43,9 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 .refs-list{margin-top:8px;display:flex;flex-direction:column;gap:6px}
 .ref-item{display:flex;align-items:center;gap:10px;background:#f8f8f8;border:1px solid #eee;border-radius:8px;padding:9px 12px;cursor:pointer;transition:border-color .15s,background .15s;text-align:right}
 .ref-item:hover{border-color:#1a7344;background:#f0faf4}
-.ref-num{min-width:24px;height:24px;background:#1a7344;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.ref-num{min-width:24px;height:24px;color:#1a7344;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.ref-num::before{content:"["}
+.ref-num::after{content:"]"}
 .ref-title{font-size:13px;color:#1a7344;text-decoration:underline;flex:1}
 #ref-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center}
 #ref-modal-overlay.active{display:flex}
@@ -252,12 +256,13 @@ function openRefModal(refs, num){
   const ref = refs[num];
   if(!ref) return;
   const title = ref.title || `مرجع ${num}`;
-  document.getElementById('ref-modal-title').textContent = title;
+  document.getElementById('ref-modal-title').textContent = `[${num}] ${title}`;
   const body = document.getElementById('ref-modal-body');
   if(ref.url){
+    body.style.display = '';
     body.innerHTML = `<a href="${escAttr(ref.url)}" target="_blank" rel="noopener noreferrer">${escHtml(ref.url)}</a>`;
   } else {
-    body.textContent = title;
+    body.style.display = 'none';
   }
   document.getElementById('ref-modal-overlay').classList.add('active');
 }
