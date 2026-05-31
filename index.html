@@ -14,15 +14,9 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 #messages{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:20px;background:#fff}
 #messages::-webkit-scrollbar{width:6px}
 #messages::-webkit-scrollbar-thumb{background:#ccc;border-radius:10px}
-
 .msg{display:flex;flex-direction:column;width:100%}
-
 .msg.user{align-items:flex-end}
-.msg.user .msg-body{background:#1a7344;color:#fff;padding:11px 16px;border-radius:18px 18px 4px 18px;font-size:15px;line-height:1.6;max-width:70%;display:inline-block;direction:rtl;text-align:right;
-    margin-left: auto;
-    margin-right: 0;
-}
-
+.msg.user .msg-body{background:#1a7344;color:#fff;padding:11px 16px;border-radius:18px 18px 4px 18px;font-size:15px;line-height:1.6;max-width:70%;display:inline-block;direction:rtl;text-align:right;margin-left:auto;margin-right:0}
 .msg.bot{align-items:flex-start}
 .msg.bot .msg-body{font-size:15px;line-height:1.8;color:#1a1a1a;width:100%}
 .msg.bot .msg-body.rtl{direction:rtl;text-align:right}
@@ -35,28 +29,17 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 .msg.bot .msg-body li{margin-bottom:6px;line-height:1.7}
 .msg.bot .msg-body strong{font-weight:600}
 .msg.bot .msg-body h1,.msg.bot .msg-body h2,.msg.bot .msg-body h3{font-weight:600;margin:12px 0 6px}
-
-/* تنسيق الروابط القابلة للنقر */
-.msg.bot .msg-body a {
-    color: #1a7344;
-    text-decoration: underline;
-    word-break: break-all;
-}
-.msg.bot .msg-body a:hover {
-    color: #0e4d2e;
-}
-
+.msg.bot .msg-body a{color:#1a7344;text-decoration:underline;word-break:break-all}
+.msg.bot .msg-body a:hover{color:#0e4d2e}
 #quick-replies-bar{padding:8px 16px 0;display:flex;flex-wrap:wrap;gap:8px;direction:rtl;background:#fff;flex-shrink:0}
 #quick-replies-bar:empty{display:none}
 .qr-btn{background:#fff;border:1.5px solid #1a7344;color:#1a7344;padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;line-height:1.4}
 .qr-btn:hover{background:#1a7344;color:#fff}
-
 .typing{display:flex;gap:5px;align-items:center;padding:6px 0}
 .typing span{width:8px;height:8px;background:#1a7344;border-radius:50%;animation:blink 1.2s infinite}
 .typing span:nth-child(2){animation-delay:.2s}
 .typing span:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
-
 #input-area{padding:10px 16px 14px;border-top:1px solid #eee;display:flex;gap:10px;align-items:flex-end;flex-shrink:0;background:#fff}
 #msg-input{flex:1;border:1px solid #ddd;border-radius:22px;padding:11px 18px;font-size:15px;resize:none;max-height:120px;outline:none;background:#f9f9f9;color:#1a1a1a;font-family:inherit;line-height:1.5;transition:border-color .2s}
 #msg-input:focus{border-color:#1a7344;background:#fff}
@@ -77,13 +60,12 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
   <div id="quick-replies-bar"></div>
   <div id="input-area">
     <button id="send-btn" aria-label="إرسال" disabled>
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 20l19-8L3 4v5l13 3-13 3z"/></path></svg>
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 20l19-8L3 4v5l13 3-13 3z"/></svg>
     </button>
     <textarea id="msg-input" rows="1" placeholder="جارٍ الاتصال..." disabled></textarea>
   </div>
   <div class="disclaimer">هذه الخدمة أداة استرشادية تعمل بالذكاء الاصطناعي للمساعدة فقط.</div>
 </div>
-
 <script>
 (function(){
 "use strict";
@@ -91,121 +73,108 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 const TOKEN_ENDPOINT = "https://8f25ee591c52e1a8afb9345860cf3a.4a.environment.api.powerplatform.com/powervirtualagents/botsbyschema/crf19_agent/directline/token?api-version=2022-03-01-preview";
 
 const messagesEl = document.getElementById("messages");
-const qrBar = document.getElementById("quick-replies-bar");
-const input = document.getElementById("msg-input");
-const sendBtn = document.getElementById("send-btn");
+const qrBar     = document.getElementById("quick-replies-bar");
+const input     = document.getElementById("msg-input");
+const sendBtn   = document.getElementById("send-btn");
 
 let dlUrl = null, token = null, conversationId = null, watermark = null, waiting = false;
 const seenActivityIds = new Set();
 
-// ========== دالة تحويل النص العادي إلى روابط ==========
-function convertPlainTextLinks(text) {
-    // نمط للبحث عن الروابط العادية (http://, https://, www.)
-    const urlPattern = /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,?!:;'")\]}])/gi;
-    
-    return text.replace(urlPattern, function(url) {
-        let href = url;
-        if (href.startsWith('www.')) {
-            href = 'https://' + href;
-        }
-        href = href.replace(/[.,?!:;'")\]}]+$/, '');
-        return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
-    });
+/* ── اتجاه حقل الإدخال ── */
+function updateInputDirection(){
+  const first = input.value.trimStart().charAt(0);
+  const isAr = /[\u0600-\u06FF]/.test(first);
+  input.style.direction  = (!first || isAr) ? "rtl" : "ltr";
+  input.style.textAlign  = (!first || isAr) ? "right" : "left";
 }
-
-// ========== دالة معالجة النص النهائية (تدعم HTML الخام + الماركداون) ==========
-function renderMarkdown(text) {
-    let html = text;
-    
-    // الخطوة 1: إذا كان النص يحتوي على وسوم HTML مثل <a href="..."> نعرضه مباشرة بعد تنظيف بسيط
-    // نتحقق إذا كان النص يحتوي على وسوم HTML أساسية
-    const hasHtmlTags = /<[^>]+>/i.test(text);
-    
-    if (hasHtmlTags) {
-        // إذا كان هناك وسوم HTML، نقوم بعرضها مباشرة ولكن ننظفها قليلاً للأمان
-        // ونحول الروابط المخفية (مثل [text](url)) إذا وجدت
-        html = html
-            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/&lt;([^&]+)&gt;/g, '<$1>'); // نعيد بناء الوسوم الصالحة فقط
-    } else {
-        // الخطوة 2: تحويل الروابط العادية إلى HTML
-        html = convertPlainTextLinks(html);
-        
-        // الخطوة 3: تحويل علامات الماركداون
-        html = html
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-            .replace(/\*(.*?)\*/g, "<em>$1</em>")
-            .replace(/^#{3}\s(.+)/gm, "<h3>$1</h3>")
-            .replace(/^#{2}\s(.+)/gm, "<h2>$1</h2>")
-            .replace(/^#{1}\s(.+)/gm, "<h1>$1</h1>")
-            .replace(/^[-*]\s(.+)/gm, "<li>$1</li>")
-            .replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>")
-            .replace(/<\/ul>\s*<ul>/g, "");
-    }
-    
-    // معالجة الفقرات
-    html = html.split(/\n\n+/).map(block => {
-        if(/^<[huola]/.test(block.trim())) return block;
-        return "<p>" + block.replace(/\n/g, "<br>") + "</p>";
-    }).join("");
-    
-    // الخطوة الأخيرة: التأكد من أن أي رابط متبقي له target="_blank"
-    html = html.replace(/<a\s+([^>]*?)>/gi, function(match, attrs) {
-        if (!attrs.includes('target=')) {
-            attrs += ' target="_blank" rel="noopener noreferrer"';
-        }
-        return `<a ${attrs}>`;
-    });
-    
-    return html;
-}
-// ====================================================
-
-// ========== تحديث اتجاه الكتابة في حقل الإدخال ==========
-function updateInputDirection() {
-    let text = input.value;
-    if (!text || text.trim() === "") {
-        input.style.direction = "rtl";
-        input.style.textAlign = "right";
-        return;
-    }
-    
-    let trimmedText = text.trimStart();
-    let firstChar = trimmedText.charAt(0);
-    const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-    
-    if (arabicRegex.test(firstChar)) {
-        input.style.direction = "rtl";
-        input.style.textAlign = "right";
-    } else {
-        input.style.direction = "ltr";
-        input.style.textAlign = "left";
-    }
-}
-
 input.addEventListener("input", updateInputDirection);
 input.addEventListener("focus", updateInputDirection);
-setTimeout(updateInputDirection, 100);
-// ====================================================
 
+/* ── تغيير حجم حقل الإدخال ── */
 function autoResize(){
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 120) + "px";
 }
 input.addEventListener("input", autoResize);
 
+/* ── كشف اتجاه النص ── */
 function isRTL(text){
-  const rtl = (text.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g)||[]).length;
+  const rtl = (text.match(/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/g)||[]).length;
   const ltr = (text.match(/[a-zA-Z]/g)||[]).length;
   return rtl >= ltr;
 }
 
+/* ── تحويل النص إلى HTML آمن مع دعم Markdown والروابط ── */
+function renderMarkdown(raw){
+  // 1. قسّم النص إلى أجزاء: روابط markdown [text](url)، روابط عادية، نص عادي
+  const LINK_MD  = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  const LINK_URL = /https?:\/\/[^\s<>"')\]،,،]+/g;
+
+  // نجمع كل المقاطع في مصفوفة: {type:'html'|'text', value}
+  const segments = [];
+  let last = 0;
+
+  // دمج كلا النمطين بترتيب الظهور
+  const combined = [];
+  let m;
+  LINK_MD.lastIndex = 0;
+  while((m = LINK_MD.exec(raw)) !== null)  combined.push({idx:m.index, len:m[0].length, type:'md',  label:m[1], url:m[2]});
+  LINK_URL.lastIndex = 0;
+  while((m = LINK_URL.exec(raw)) !== null){
+    // تأكد أنه ليس داخل رابط markdown معالَج
+    const inside = combined.some(c => c.type==='md' && m.index >= c.idx && m.index < c.idx+c.len);
+    if(!inside) combined.push({idx:m.index, len:m[0].length, type:'url', url:m[0]});
+  }
+  combined.sort((a,b)=>a.idx-b.idx);
+
+  for(const c of combined){
+    if(c.idx > last) segments.push({type:'text', value: raw.slice(last, c.idx)});
+    const href = c.url.replace(/[.,،؟?!:;'")\]]+$/, ''); // أزل علامات الترقيم من النهاية
+    const label = c.type==='md' ? escHtml(c.label) : escHtml(href);
+    segments.push({type:'html', value:`<a href="${escAttr(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`});
+    last = c.idx + c.len;
+  }
+  if(last < raw.length) segments.push({type:'text', value: raw.slice(last)});
+
+  // 2. طبّق Markdown على أجزاء النص فقط
+  const processed = segments.map(s => {
+    if(s.type === 'html') return s.value;
+    return applyMarkdown(escHtml(s.value));
+  }).join('');
+
+  // 3. لفّ الفقرات
+  return wrapParagraphs(processed);
+}
+
+function escHtml(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function escAttr(s){
+  return s.replace(/"/g,"&quot;");
+}
+
+function applyMarkdown(s){
+  return s
+    .replace(/\*\*(.+?)\*\*/g,  "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g,      "<em>$1</em>")
+    .replace(/^###\s(.+)/gm,    "<h3>$1</h3>")
+    .replace(/^##\s(.+)/gm,     "<h2>$1</h2>")
+    .replace(/^#\s(.+)/gm,      "<h1>$1</h1>")
+    .replace(/^[-*]\s(.+)/gm,   "<li>$1</li>")
+    .replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>")
+    .replace(/<\/ul>\s*<ul>/g,  "");
+}
+
+function wrapParagraphs(html){
+  return html.split(/\n\n+/).map(block => {
+    const t = block.trim();
+    if(!t) return "";
+    if(/^<[huol]/.test(t)) return t;
+    return "<p>" + t.replace(/\n/g,"<br>") + "</p>";
+  }).filter(Boolean).join("");
+}
+
+/* ── Quick Replies ── */
 function setQuickReplies(actions){
   qrBar.innerHTML = "";
   if(!actions || !actions.length) return;
@@ -213,80 +182,64 @@ function setQuickReplies(actions){
     const btn = document.createElement("button");
     btn.className = "qr-btn";
     btn.textContent = action.title || action.value;
-    btn.addEventListener("click", () => {
-      clearQuickReplies();
-      sendText(action.value || action.title);
-    });
+    btn.addEventListener("click", () => { clearQuickReplies(); sendText(action.value || action.title); });
     qrBar.appendChild(btn);
   });
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
+function clearQuickReplies(){ qrBar.innerHTML = ""; }
 
-function clearQuickReplies(){
-  qrBar.innerHTML = "";
-}
-
+/* ── إضافة رسالة ── */
 function addMessage(role, text, suggestedActions){
   const div = document.createElement("div");
   div.className = "msg " + role;
-
   if(role === "bot"){
     const dir = isRTL(text) ? "rtl" : "ltr";
-    const renderedHtml = renderMarkdown(text);
-    div.innerHTML = `<div class="msg-body ${dir}">${renderedHtml}</div>`;
+    div.innerHTML = `<div class="msg-body ${dir}">${renderMarkdown(text)}</div>`;
     messagesEl.appendChild(div);
-    if(suggestedActions && suggestedActions.actions && suggestedActions.actions.length){
+    if(suggestedActions && suggestedActions.actions && suggestedActions.actions.length)
       setQuickReplies(suggestedActions.actions);
-    } else {
+    else
       clearQuickReplies();
-    }
   } else {
-    const safe = text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    div.innerHTML = `<div class="msg-body">${safe}</div>`;
+    div.innerHTML = `<div class="msg-body">${escHtml(text)}</div>`;
     messagesEl.appendChild(div);
   }
-
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
+/* ── Typing indicator ── */
 function showTyping(){
   const div = document.createElement("div");
-  div.className = "msg bot";
-  div.id = "typing-indicator";
+  div.className = "msg bot"; div.id = "typing-indicator";
   div.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
   messagesEl.appendChild(div);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
+function hideTyping(){ const t=document.getElementById("typing-indicator"); if(t) t.remove(); }
 
-function hideTyping(){
-  const t = document.getElementById("typing-indicator");
-  if(t) t.remove();
-}
-
+/* ── تفعيل/تعطيل الإدخال ── */
 function setReady(ready){
-  input.disabled = !ready;
+  input.disabled  = !ready;
   sendBtn.disabled = !ready;
   input.placeholder = ready ? "اكتب رسالتك هنا..." : "جارٍ الاتصال...";
 }
 
+/* ── Polling ── */
 async function pollActivities(){
   if(!dlUrl || !conversationId || !token) return;
   try {
     const url = `${dlUrl}v3/directline/conversations/${conversationId}/activities${watermark?"?watermark="+watermark:""}`;
-    const res = await fetch(url, {headers:{"Authorization":"Bearer "+token}});
+    const res  = await fetch(url, {headers:{"Authorization":"Bearer "+token}});
     if(!res.ok) return;
     const data = await res.json();
-    if(data.activities && data.activities.length > 0){
+    if(data.activities && data.activities.length){
       data.activities.forEach(act => {
         if(act.id && seenActivityIds.has(act.id)) return;
         if(act.id) seenActivityIds.add(act.id);
-        if(act.type === "message" && act.from && act.from.role === "bot"){
+        if(act.type==="message" && act.from && act.from.role==="bot"){
           const text = act.text || "";
-          if(text){
-            hideTyping();
-            addMessage("bot", text, act.suggestedActions);
-            waiting = false;
-          }
+          if(text){ hideTyping(); addMessage("bot", text, act.suggestedActions); waiting = false; }
         }
       });
       watermark = data.watermark;
@@ -294,6 +247,7 @@ async function pollActivities(){
   } catch(e){}
 }
 
+/* ── إرسال Activity ── */
 async function postActivity(activity){
   await fetch(`${dlUrl}v3/directline/conversations/${conversationId}/activities`, {
     method:"POST",
@@ -316,26 +270,27 @@ async function sendMessage(){
   if(!text) return;
   input.value = "";
   autoResize();
+  updateInputDirection();
   await sendText(text);
 }
 
+/* ── تهيئة ── */
 async function initChat(){
   try {
     const url = new URL(TOKEN_ENDPOINT);
-    const apiVersion = url.searchParams.get("api-version");
+    const apiVersion  = url.searchParams.get("api-version");
     const envEndpoint = url.origin;
     const settingsRes = await fetch(`${envEndpoint}/powervirtualagents/regionalchannelsettings?api-version=${apiVersion}`);
-    const settings = await settingsRes.json();
+    const settings    = await settingsRes.json();
     dlUrl = settings.channelUrlsById.directline;
-    const convRes = await fetch(TOKEN_ENDPOINT);
+    const convRes  = await fetch(TOKEN_ENDPOINT);
     const convInfo = await convRes.json();
     token = convInfo.token;
-    const startRes = await fetch(`${dlUrl}v3/directline/conversations`, {
-      method:"POST",
-      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"}
+    const startRes  = await fetch(`${dlUrl}v3/directline/conversations`, {
+      method:"POST", headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"}
     });
     const startData = await startRes.json();
-    conversationId = startData.conversationId;
+    conversationId  = startData.conversationId;
     setInterval(pollActivities, 1500);
     setReady(true);
     await postActivity({type:"event", name:"startConversation", channelData:{postBack:true}});
@@ -347,10 +302,7 @@ async function initChat(){
 }
 
 sendBtn.addEventListener("click", sendMessage);
-input.addEventListener("keydown", e => {
-  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }
-});
-
+input.addEventListener("keydown", e => { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
 initChat();
 })();
 </script>
