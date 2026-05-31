@@ -16,7 +16,9 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 #messages::-webkit-scrollbar-thumb{background:#ccc;border-radius:10px}
 .msg{display:flex;flex-direction:column;width:100%}
 .msg.user{align-items:flex-end}
-.msg.user .msg-body{background:#1a7344;color:#fff;padding:11px 16px;border-radius:18px 18px 4px 18px;font-size:15px;line-height:1.6;max-width:70%;display:inline-block;direction:rtl;text-align:right;margin-left:auto;margin-right:0}
+.msg.user .msg-body{background:#1a7344;color:#fff;padding:11px 16px;border-radius:18px 18px 4px 18px;font-size:15px;line-height:1.6;max-width:70%;display:inline-block;margin-left:auto;margin-right:0}
+.msg.user .msg-body.rtl{direction:rtl;text-align:right}
+.msg.user .msg-body.ltr{direction:ltr;text-align:left}
 .msg.bot{align-items:flex-start}
 .msg.bot .msg-body{font-size:15px;line-height:1.8;color:#1a1a1a;width:100%}
 .msg.bot .msg-body.rtl{direction:rtl;text-align:right}
@@ -202,7 +204,8 @@ function addMessage(role, text, suggestedActions){
     else
       clearQuickReplies();
   } else {
-    div.innerHTML = `<div class="msg-body">${escHtml(text)}</div>`;
+    const dir = isRTL(text) ? "rtl" : "ltr";
+    div.innerHTML = `<div class="msg-body ${dir}">${escHtml(text)}</div>`;
     messagesEl.appendChild(div);
   }
   messagesEl.scrollTop = messagesEl.scrollHeight;
