@@ -180,7 +180,7 @@ function renderMarkdown(raw){
   }).join('');
 
   // 3. لفّ الفقرات
-  return wrapParagraphs(processed);
+  return { html: wrapParagraphs(processed), refs };
 }
 
 function escHtml(s){
