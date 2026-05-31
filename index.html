@@ -133,14 +133,29 @@ function isRTL(text){
 
 /* ── تحويل النص إلى HTML آمن مع دعم Markdown والروابط والمراجع ── */
 function renderMarkdown(raw){
-  // 0. استخرج تعريفات المراجع: [1]: "cite:x" "Title"  أو  [1]: https://...
+  // 0. استخرج تعريفات المراجع ثم احذفها
+  // الصيغ المدعومة:
+  //   [1]: "cite:id" "Title"
+  //   [1]: "cite:id" "Title" https://url
+  //   [1]: https://url
+  //   [1]: https://url "Title"
   const refs = {};
-  const REF_DEF = /^\[(\d+)\]:\s*(?:"[^"]*"\s*)?(?:"([^"]+)"|(https?:\/\/\S+)).*$/gm;
+  const REF_LINE = /^\[(\d+)\]:\s*(.+)$/gm;
   let rm;
-  while((rm = REF_DEF.exec(raw)) !== null){
-    refs[rm[1]] = { title: rm[2]||null, url: rm[3]||null };
+  while((rm = REF_LINE.exec(raw)) !== null){
+    const num  = rm[1];
+    const rest = rm[2];
+    let title = null, url = null;
+    // استخرج كل النصوص بين اقتباسين
+    const quoted = [...rest.matchAll(/"([^"]+)"/g)].map(x => x[1]);
+    for(const q of quoted){
+      if(!q.startsWith('cite:')) title = q; // أول عنوان حقيقي
+    }
+    // استخرج الرابط
+    const urlM = rest.match(/https?:\/\/\S+/);
+    if(urlM) url = urlM[0].replace(/[.,،؟?!"')\]]+$/, '');
+    refs[num] = { title, url };
   }
-  // احذف سطور تعريفات المراجع
   raw = raw.replace(/^\[\d+\]:.*$/gm,'').replace(/\n{3,}/g,'\n\n').trim();
 
   // 1. قسّم النص إلى أجزاء: روابط markdown [text](url)، روابط عادية، نص عادي
