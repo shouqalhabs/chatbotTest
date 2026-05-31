@@ -17,22 +17,8 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 
 .msg{display:flex;flex-direction:column;width:100%}
 
-/* الحل: إجبار رسالة المستخدم على الظهور بالجهة اليمنى مع مراعاة RTL */
-.msg.user {
-    align-items: flex-end;
-}
-.msg.user .msg-body {
-    background: #1a7344;
-    color: #fff;
-    padding: 11px 16px;
-    border-radius: 18px 18px 4px 18px;
-    font-size: 15px;
-    line-height: 1.6;
-    max-width: 70%;
-    display: inline-block;
-    direction: rtl;
-    text-align: right;
-    /* القاعدة السحرية التالية تضمن ظهور الرسالة باليمين حتى في وجود dir="rtl" */
+.msg.user{align-items:flex-end}
+.msg.user .msg-body{background:#1a7344;color:#fff;padding:11px 16px;border-radius:18px 18px 4px 18px;font-size:15px;line-height:1.6;max-width:70%;display:inline-block;direction:rtl;text-align:right;
     margin-left: auto;
     margin-right: 0;
 }
@@ -62,7 +48,8 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
 
 #input-area{padding:10px 16px 14px;border-top:1px solid #eee;display:flex;gap:10px;align-items:flex-end;flex-shrink:0;background:#fff}
-#msg-input{flex:1;border:1px solid #ddd;border-radius:22px;padding:11px 18px;font-size:15px;resize:none;max-height:120px;outline:none;background:#f9f9f9;color:#1a1a1a;font-family:inherit;direction:rtl;line-height:1.5;transition:border-color .2s}
+#msg-input{flex:1;border:1px solid #ddd;border-radius:22px;padding:11px 18px;font-size:15px;resize:none;max-height:120px;outline:none;background:#f9f9f9;color:#1a1a1a;font-family:inherit;line-height:1.5;transition:border-color .2s}
+/* إزالة direction:rtl الثابت من هنا */
 #msg-input:focus{border-color:#1a7344;background:#fff}
 #send-btn{width:42px;height:42px;background:#1a7344;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .2s}
 #send-btn:hover{opacity:.85}
@@ -102,11 +89,46 @@ const sendBtn = document.getElementById("send-btn");
 let dlUrl = null, token = null, conversationId = null, watermark = null, waiting = false;
 const seenActivityIds = new Set();
 
+// ========== الوظيفة الجديدة: تحديد اتجاه الكتابة حسب أول حرف عربي ==========
+function updateInputDirection() {
+    let text = input.value;
+    if (!text || text.trim() === "") {
+        // في حالة عدم وجود نص، اجعل الاتجاه rtl (افتراضي لأن الواجهة عربية)
+        input.style.direction = "rtl";
+        input.style.textAlign = "right";
+        return;
+    }
+    
+    // الكشف عن وجود أحرف عربية في بداية النص (تجاهل المسافات الأولية)
+    let trimmedText = text.trimStart();
+    let firstChar = trimmedText.charAt(0);
+    
+    // نطاق الأحرف العربية
+    const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    
+    if (arabicRegex.test(firstChar)) {
+        // عربي: من اليمين لليسار
+        input.style.direction = "rtl";
+        input.style.textAlign = "right";
+    } else {
+        // إنجليزي أو رقم: من اليسار لليمين
+        input.style.direction = "ltr";
+        input.style.textAlign = "left";
+    }
+}
+// ربط الوظيفة بأحداث الكتابة
+input.addEventListener("input", updateInputDirection);
+// أيضاً عند التركيز أو تغيير المحتوى يدوياً
+input.addEventListener("focus", updateInputDirection);
+// =================================================================
+
 function autoResize(){
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 120) + "px";
 }
 input.addEventListener("input", autoResize);
+// تحديث الاتجاه أول مرة بعد تحميل الصفحة (بعد أن يصبح جاهزاً)
+setTimeout(updateInputDirection, 100);
 
 function isRTL(text){
   const rtl = (text.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/g)||[]).length;
