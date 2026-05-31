@@ -98,45 +98,70 @@ const sendBtn = document.getElementById("send-btn");
 let dlUrl = null, token = null, conversationId = null, watermark = null, waiting = false;
 const seenActivityIds = new Set();
 
-// ========== دالة تحويل النص إلى روابط قابلة للنقر ==========
-function convertLinksToHTML(text) {
-    // نمط للبحث عن الروابط (http://, https://, www.)
+// ========== دالة تحويل النص العادي إلى روابط ==========
+function convertPlainTextLinks(text) {
+    // نمط للبحث عن الروابط العادية (http://, https://, www.)
     const urlPattern = /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,?!:;'")\]}])/gi;
     
     return text.replace(urlPattern, function(url) {
         let href = url;
-        // إذا كان الرابط يبدأ بـ www. نضيف https://
         if (href.startsWith('www.')) {
             href = 'https://' + href;
         }
-        // نحرص على عدم وجود أقواس زائدة في نهاية الرابط
         href = href.replace(/[.,?!:;'")\]}]+$/, '');
         return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
     });
 }
 
-// ========== دالة تحويل الماركداون مع دعم الروابط ==========
+// ========== دالة معالجة النص النهائية (تدعم HTML الخام + الماركداون) ==========
 function renderMarkdown(text) {
-    // أولاً: تحويل الروابط إلى HTML
-    let html = convertLinksToHTML(text);
+    let html = text;
     
-    // ثانياً: تحويل علامات الماركداون
-    html = html
-        .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-        .replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
-        .replace(/\*(.*?)\*/g,"<em>$1</em>")
-        .replace(/^#{3}\s(.+)/gm,"<h3>$1</h3>")
-        .replace(/^#{2}\s(.+)/gm,"<h2>$1</h2>")
-        .replace(/^#{1}\s(.+)/gm,"<h1>$1</h1>")
-        .replace(/^[-*]\s(.+)/gm,"<li>$1</li>")
-        .replace(/(<li>[\s\S]*?<\/li>)/g,"<ul>$1</ul>")
-        .replace(/<\/ul>\s*<ul>/g,"");
+    // الخطوة 1: إذا كان النص يحتوي على وسوم HTML مثل <a href="..."> نعرضه مباشرة بعد تنظيف بسيط
+    // نتحقق إذا كان النص يحتوي على وسوم HTML أساسية
+    const hasHtmlTags = /<[^>]+>/i.test(text);
+    
+    if (hasHtmlTags) {
+        // إذا كان هناك وسوم HTML، نقوم بعرضها مباشرة ولكن ننظفها قليلاً للأمان
+        // ونحول الروابط المخفية (مثل [text](url)) إذا وجدت
+        html = html
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/&lt;([^&]+)&gt;/g, '<$1>'); // نعيد بناء الوسوم الصالحة فقط
+    } else {
+        // الخطوة 2: تحويل الروابط العادية إلى HTML
+        html = convertPlainTextLinks(html);
+        
+        // الخطوة 3: تحويل علامات الماركداون
+        html = html
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(/\*(.*?)\*/g, "<em>$1</em>")
+            .replace(/^#{3}\s(.+)/gm, "<h3>$1</h3>")
+            .replace(/^#{2}\s(.+)/gm, "<h2>$1</h2>")
+            .replace(/^#{1}\s(.+)/gm, "<h1>$1</h1>")
+            .replace(/^[-*]\s(.+)/gm, "<li>$1</li>")
+            .replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>")
+            .replace(/<\/ul>\s*<ul>/g, "");
+    }
     
     // معالجة الفقرات
     html = html.split(/\n\n+/).map(block => {
         if(/^<[huola]/.test(block.trim())) return block;
-        return "<p>" + block.replace(/\n/g,"<br>") + "</p>";
+        return "<p>" + block.replace(/\n/g, "<br>") + "</p>";
     }).join("");
+    
+    // الخطوة الأخيرة: التأكد من أن أي رابط متبقي له target="_blank"
+    html = html.replace(/<a\s+([^>]*?)>/gi, function(match, attrs) {
+        if (!attrs.includes('target=')) {
+            attrs += ' target="_blank" rel="noopener noreferrer"';
+        }
+        return `<a ${attrs}>`;
+    });
     
     return html;
 }
@@ -207,7 +232,8 @@ function addMessage(role, text, suggestedActions){
 
   if(role === "bot"){
     const dir = isRTL(text) ? "rtl" : "ltr";
-    div.innerHTML = `<div class="msg-body ${dir}">${renderMarkdown(text)}</div>`;
+    const renderedHtml = renderMarkdown(text);
+    div.innerHTML = `<div class="msg-body ${dir}">${renderedHtml}</div>`;
     messagesEl.appendChild(div);
     if(suggestedActions && suggestedActions.actions && suggestedActions.actions.length){
       setQuickReplies(suggestedActions.actions);
