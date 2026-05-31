@@ -17,9 +17,11 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 
 .msg{display:flex;flex-direction:column;width:100%}
 
+/* رسائل المستخدم - تظهر في الجهة اليمنى */
 .msg.user{align-items:flex-end}
 .msg.user .msg-body{background:#1a7344;color:#fff;padding:11px 16px;border-radius:18px 18px 4px 18px;font-size:15px;line-height:1.6;max-width:70%;display:inline-block;direction:rtl;text-align:right}
 
+/* رسائل البوت - تظهر في الجهة اليسرى (بدون أي تعديل) */
 .msg.bot{align-items:flex-start}
 .msg.bot .msg-body{font-size:15px;line-height:1.8;color:#1a1a1a;width:100%}
 .msg.bot .msg-body.rtl{direction:rtl;text-align:right}
