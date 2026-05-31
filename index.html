@@ -31,9 +31,26 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 .msg.bot .msg-body h1,.msg.bot .msg-body h2,.msg.bot .msg-body h3{font-weight:600;margin:12px 0 6px}
 .msg.bot .msg-body a{color:#1a7344;text-decoration:underline;word-break:break-all}
 .msg.bot .msg-body a:hover{color:#0e4d2e}
-.cite-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:#e8f5ee;color:#1a7344;border:1px solid #1a7344;border-radius:10px;font-size:11px;font-weight:700;vertical-align:super;line-height:1;cursor:default;text-decoration:none!important}
-a.cite-badge{cursor:pointer}
-a.cite-badge:hover{background:#1a7344;color:#fff}
+.cite-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:#e8f5ee;color:#1a7344;border:1px solid #1a7344;border-radius:10px;font-size:11px;font-weight:700;vertical-align:super;line-height:1;cursor:pointer;text-decoration:none!important;transition:background .15s,color .15s}
+.cite-badge:hover{background:#1a7344;color:#fff}
+.refs-section{margin-top:12px;border-top:1px solid #e5e5e5;padding-top:8px;direction:rtl}
+.refs-toggle{background:none;border:none;cursor:pointer;color:#888;font-size:13px;font-family:inherit;display:flex;align-items:center;gap:6px;padding:2px 0}
+.refs-toggle:hover{color:#1a7344}
+.refs-toggle .arrow{transition:transform .2s;display:inline-block}
+.refs-toggle.open .arrow{transform:rotate(180deg)}
+.refs-list{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.ref-item{display:flex;align-items:center;gap:10px;background:#f8f8f8;border:1px solid #eee;border-radius:8px;padding:9px 12px;cursor:pointer;transition:border-color .15s,background .15s;text-align:right}
+.ref-item:hover{border-color:#1a7344;background:#f0faf4}
+.ref-num{min-width:24px;height:24px;background:#1a7344;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.ref-title{font-size:13px;color:#1a7344;text-decoration:underline;flex:1}
+#ref-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center}
+#ref-modal-overlay.active{display:flex}
+#ref-modal{background:#fff;border-radius:12px;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;padding:24px;position:relative;direction:rtl}
+#ref-modal h3{font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:14px;padding-left:32px}
+#ref-modal .ref-body{font-size:14px;line-height:1.8;color:#333}
+#ref-modal .ref-body a{color:#1a7344;text-decoration:underline;word-break:break-all}
+#ref-modal-close{position:absolute;top:14px;left:14px;background:none;border:1px solid #ddd;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#666}
+#ref-modal-close:hover{background:#f0f0f0}
 #quick-replies-bar{padding:8px 16px 0;display:flex;flex-wrap:wrap;gap:8px;direction:rtl;background:#fff;flex-shrink:0}
 #quick-replies-bar:empty{display:none}
 .qr-btn{background:#fff;border:1.5px solid #1a7344;color:#1a7344;padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;line-height:1.4}
@@ -68,6 +85,13 @@ a.cite-badge:hover{background:#1a7344;color:#fff}
     <textarea id="msg-input" rows="1" placeholder="جارٍ الاتصال..." disabled></textarea>
   </div>
   <div class="disclaimer">هذه الخدمة أداة استرشادية تعمل بالذكاء الاصطناعي للمساعدة فقط.</div>
+</div>
+<div id="ref-modal-overlay">
+  <div id="ref-modal">
+    <button id="ref-modal-close" aria-label="إغلاق">✕</button>
+    <h3 id="ref-modal-title"></h3>
+    <div class="ref-body" id="ref-modal-body"></div>
+  </div>
 </div>
 <script>
 (function(){
@@ -167,16 +191,10 @@ function escAttr(s){
 }
 
 function applyMarkdown(s, refs){
-  // citations مضمّنة [1] [2] إلخ
   if(refs && Object.keys(refs).length){
     s = s.replace(/\[(\d+)\]/g, (match, num) => {
-      const ref = refs[num];
-      if(!ref) return match;
-      if(ref.url){
-        return `<a href="${escAttr(ref.url)}" target="_blank" rel="noopener noreferrer" class="cite-badge">${num}</a>`;
-      }
-      const title = ref.title ? escHtml(ref.title) : `مرجع ${num}`;
-      return `<span class="cite-badge" title="${title}">${num}</span>`;
+      if(!refs[num]) return match;
+      return `<span class="cite-badge" data-ref="${num}">${num}</span>`;
     });
   }
   return s
@@ -214,13 +232,75 @@ function setQuickReplies(actions){
 }
 function clearQuickReplies(){ qrBar.innerHTML = ""; }
 
+/* ── Modal ── */
+function openRefModal(refs, num){
+  const ref = refs[num];
+  if(!ref) return;
+  const title = ref.title || `مرجع ${num}`;
+  document.getElementById('ref-modal-title').textContent = title;
+  const body = document.getElementById('ref-modal-body');
+  if(ref.url){
+    body.innerHTML = `<a href="${escAttr(ref.url)}" target="_blank" rel="noopener noreferrer">${escHtml(ref.url)}</a>`;
+  } else {
+    body.textContent = title;
+  }
+  document.getElementById('ref-modal-overlay').classList.add('active');
+}
+document.getElementById('ref-modal-close').addEventListener('click', () => {
+  document.getElementById('ref-modal-overlay').classList.remove('active');
+});
+document.getElementById('ref-modal-overlay').addEventListener('click', e => {
+  if(e.target === e.currentTarget) e.currentTarget.classList.remove('active');
+});
+
 /* ── إضافة رسالة ── */
 function addMessage(role, text, suggestedActions){
   const div = document.createElement("div");
   div.className = "msg " + role;
   if(role === "bot"){
     const dir = isRTL(text) ? "rtl" : "ltr";
-    div.innerHTML = `<div class="msg-body ${dir}">${renderMarkdown(text)}</div>`;
+    const { html, refs } = renderMarkdown(text);
+    let inner = `<div class="msg-body ${dir}">${html}</div>`;
+
+    // References section
+    const refKeys = Object.keys(refs);
+    if(refKeys.length){
+      const items = refKeys.map(num => {
+        const title = refs[num].title || (refs[num].url ? refs[num].url : `مرجع ${num}`);
+        return `<div class="ref-item" data-ref="${num}"><span class="ref-num">${num}</span><span class="ref-title">${escHtml(title)}</span></div>`;
+      }).join('');
+      inner += `<div class="refs-section">
+        <button class="refs-toggle" aria-expanded="false">
+          <span class="arrow">▼</span>
+          <span class="refs-label">مراجع ${refKeys.length}</span>
+        </button>
+        <div class="refs-list" hidden>${items}</div>
+      </div>`;
+    }
+
+    div.innerHTML = inner;
+
+    // toggle refs
+    const toggle = div.querySelector('.refs-toggle');
+    if(toggle){
+      toggle.addEventListener('click', () => {
+        const list = div.querySelector('.refs-list');
+        const open = toggle.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open);
+        list.hidden = !open;
+      });
+    }
+
+    // cite badges click
+    div.querySelectorAll('.cite-badge[data-ref]').forEach(badge => {
+      badge.addEventListener('click', () => openRefModal(refs, badge.dataset.ref));
+    });
+
+    // ref-item click
+    div.querySelectorAll('.ref-item[data-ref]').forEach(item => {
+      item.addEventListener('click', () => openRefModal(refs, item.dataset.ref));
+    });
+
     messagesEl.appendChild(div);
     if(suggestedActions && suggestedActions.actions && suggestedActions.actions.length)
       setQuickReplies(suggestedActions.actions);
