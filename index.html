@@ -31,6 +31,9 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 .msg.bot .msg-body h1,.msg.bot .msg-body h2,.msg.bot .msg-body h3{font-weight:600;margin:12px 0 6px}
 .msg.bot .msg-body a{color:#1a7344;text-decoration:underline;word-break:break-all}
 .msg.bot .msg-body a:hover{color:#0e4d2e}
+.cite-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:#e8f5ee;color:#1a7344;border:1px solid #1a7344;border-radius:10px;font-size:11px;font-weight:700;vertical-align:super;line-height:1;cursor:default;text-decoration:none!important}
+a.cite-badge{cursor:pointer}
+a.cite-badge:hover{background:#1a7344;color:#fff}
 #quick-replies-bar{padding:8px 16px 0;display:flex;flex-wrap:wrap;gap:8px;direction:rtl;background:#fff;flex-shrink:0}
 #quick-replies-bar:empty{display:none}
 .qr-btn{background:#fff;border:1.5px solid #1a7344;color:#1a7344;padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;line-height:1.4}
@@ -104,8 +107,18 @@ function isRTL(text){
   return rtl >= ltr;
 }
 
-/* ── تحويل النص إلى HTML آمن مع دعم Markdown والروابط ── */
+/* ── تحويل النص إلى HTML آمن مع دعم Markdown والروابط والمراجع ── */
 function renderMarkdown(raw){
+  // 0. استخرج تعريفات المراجع: [1]: "cite:x" "Title"  أو  [1]: https://...
+  const refs = {};
+  const REF_DEF = /^\[(\d+)\]:\s*(?:"[^"]*"\s*)?(?:"([^"]+)"|(https?:\/\/\S+)).*$/gm;
+  let rm;
+  while((rm = REF_DEF.exec(raw)) !== null){
+    refs[rm[1]] = { title: rm[2]||null, url: rm[3]||null };
+  }
+  // احذف سطور تعريفات المراجع
+  raw = raw.replace(/^\[\d+\]:.*$/gm,'').replace(/\n{3,}/g,'\n\n').trim();
+
   // 1. قسّم النص إلى أجزاء: روابط markdown [text](url)، روابط عادية، نص عادي
   const LINK_MD  = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
   const LINK_URL = /https?:\/\/[^\s<>"')\]،,،]+/g;
@@ -139,7 +152,7 @@ function renderMarkdown(raw){
   // 2. طبّق Markdown على أجزاء النص فقط
   const processed = segments.map(s => {
     if(s.type === 'html') return s.value;
-    return applyMarkdown(escHtml(s.value));
+    return applyMarkdown(escHtml(s.value), refs);
   }).join('');
 
   // 3. لفّ الفقرات
@@ -153,7 +166,19 @@ function escAttr(s){
   return s.replace(/"/g,"&quot;");
 }
 
-function applyMarkdown(s){
+function applyMarkdown(s, refs){
+  // citations مضمّنة [1] [2] إلخ
+  if(refs && Object.keys(refs).length){
+    s = s.replace(/\[(\d+)\]/g, (match, num) => {
+      const ref = refs[num];
+      if(!ref) return match;
+      if(ref.url){
+        return `<a href="${escAttr(ref.url)}" target="_blank" rel="noopener noreferrer" class="cite-badge">${num}</a>`;
+      }
+      const title = ref.title ? escHtml(ref.title) : `مرجع ${num}`;
+      return `<span class="cite-badge" title="${title}">${num}</span>`;
+    });
+  }
   return s
     .replace(/\*\*(.+?)\*\*/g,  "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g,      "<em>$1</em>")
