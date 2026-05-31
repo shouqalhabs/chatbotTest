@@ -1,219 +1,229 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>الحوكمة الذكية - جامعة القصيم</title>
-</head>
-
-<body style="margin:0; padding:20px; background:#f3f3f3; font-family: 'Segoe UI', Tahoma, sans-serif;">
-
-<!-- تحميل مكتبة WebChat من مايكروسوفت -->
-<script src="https://cdn.botframework.com/botframework-webchat/latest/webchat.js"></script>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الحوكمة الذكية - جامعة القصيم</title>
 <style>
-    /* غلاف الشات */
-    #chat-container {
-        width: 100%;
-        max-width: 100%;     
-        height: 95vh;
-        background: #ffffff;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border-radius: 8px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        margin: 0;           
-    }
-
-    #chat-container #webchat {
-        width: 100%;
-        max-width: 100% !important;
-        margin: 0 !important;
-        height: 100%;
-    }
-
-    #chatbot-header {
-        background: #1a7344;
-        color: #ffffff;
-        padding: 15px 20px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 16px;
-        font-weight: 600;
-    }
-
-    .header-avatar {
-        width: 32px;
-        height: 32px;
-        background-color: #ffffff;
-        color: #1a7344;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 13px;
-    }
-
-    #webchat {
-        flex: 1;
-        width: 100%;
-        background: #ffffff;
-        overflow: hidden;
-    }
-
-    #webchat *::-webkit-scrollbar {
-        width: 8px;
-    }
-    #webchat *::-webkit-scrollbar-track {
-        background: #f1f1f1;
-    }
-    #webchat *::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 10px;
-    }
-
-    .disclaimer-bar {
-        background-color: #ffffff;
-        color: #666;
-        font-size: 11px;
-        text-align: center;
-        padding: 8px 15px;
-        border-top: 1px solid #eee;
-        line-height: 1.4;
-    }
-
-    #webchat a {
-        color: #1a7344 !important; 
-        text-decoration: underline !important; 
-        font-weight: bold !important;
-    }
-
-    #webchat a:hover {
-        color: #004d40 !important; 
-    }    
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;justify-content:center;align-items:center;min-height:100vh}
+#chat-wrap{display:flex;flex-direction:column;width:100%;max-width:100%;height:95vh;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.1)}
+#chat-header{background:#1a7344;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.hav{width:34px;height:34px;background:#fff;color:#1a7344;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+#chat-header span{font-size:16px;font-weight:600}
+#messages{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:24px;background:#fff}
+#messages::-webkit-scrollbar{width:6px}
+#messages::-webkit-scrollbar-thumb{background:#ccc;border-radius:10px}
+.msg{display:flex;flex-direction:column;gap:8px;max-width:100%}
+.msg.bot .msg-meta{font-size:12px;color:#888;display:flex;align-items:center;gap:8px}
+.msg.bot .msg-meta .dot{width:22px;height:22px;background:#1a7344;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+.msg.bot .msg-body{font-size:15px;line-height:1.8;color:#1a1a1a;width:100%}
+.msg.bot .msg-body p{margin-bottom:10px}
+.msg.bot .msg-body p:last-child{margin-bottom:0}
+.msg.bot .msg-body ul,.msg.bot .msg-body ol{padding-right:22px;margin:8px 0}
+.msg.bot .msg-body li{margin-bottom:6px;line-height:1.7}
+.msg.bot .msg-body strong{font-weight:600}
+.msg.bot .msg-body h1,.msg.bot .msg-body h2,.msg.bot .msg-body h3{font-weight:600;margin:12px 0 6px}
+.msg.user{align-items:flex-end}
+.msg.user .msg-body{background:#1a7344;color:#fff;padding:11px 16px;border-radius:18px 18px 4px 18px;font-size:15px;line-height:1.6;max-width:70%;display:inline-block}
+.typing{display:flex;gap:5px;align-items:center;padding:6px 0}
+.typing span{width:8px;height:8px;background:#1a7344;border-radius:50%;animation:blink 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+#input-area{padding:14px 16px;border-top:1px solid #eee;display:flex;gap:10px;align-items:flex-end;flex-shrink:0;background:#fff}
+#msg-input{flex:1;border:1px solid #ddd;border-radius:22px;padding:11px 18px;font-size:15px;resize:none;max-height:120px;outline:none;background:#f9f9f9;color:#1a1a1a;font-family:inherit;direction:rtl;line-height:1.5;transition:border-color .2s}
+#msg-input:focus{border-color:#1a7344;background:#fff}
+#send-btn{width:42px;height:42px;background:#1a7344;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .2s}
+#send-btn:hover{opacity:.85}
+#send-btn:disabled{opacity:.4;cursor:not-allowed}
+#send-btn svg{width:17px;height:17px;fill:#fff;margin-right:2px}
+.disclaimer{font-size:11px;text-align:center;padding:8px 15px;color:#888;border-top:1px solid #eee;background:#fff;flex-shrink:0;line-height:1.4}
+.error-msg{color:#c0392b;font-size:14px;padding:8px 0}
 </style>
-
-<div id="chat-container" dir="rtl">
-    <div id="chatbot-header">
-        <div class="header-avatar">QU</div>
-        <span>الحوكمة الذكية - جامعة القصيم</span>
+</head>
+<body>
+<div id="chat-wrap" dir="rtl">
+  <div id="chat-header">
+    <div class="hav">QU</div>
+    <span>الحوكمة الذكية - جامعة القصيم</span>
+  </div>
+  <div id="messages">
+    <div class="msg bot">
+      <div class="msg-meta"><div class="dot">QU</div><span>الحوكمة الذكية</span></div>
+      <div class="msg-body"><p>مرحباً! أنا مساعد الحوكمة الذكية في جامعة القصيم. كيف يمكنني مساعدتك اليوم؟</p></div>
     </div>
-    <div id="webchat" role="main"></div>
-    <div class="disclaimer-bar">
-        هذه الخدمة أداة استرشادية تعمل بالذكاء الاصطناعي للمساعدة فقط.
-    </div>
+  </div>
+  <div id="input-area">
+    <button id="send-btn" aria-label="إرسال" disabled>
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 20l19-8L3 4v5l13 3-13 3z"/></svg>
+    </button>
+    <textarea id="msg-input" rows="1" placeholder="جارٍ الاتصال..." disabled></textarea>
+  </div>
+  <div class="disclaimer">هذه الخدمة أداة استرشادية تعمل بالذكاء الاصطناعي للمساعدة فقط.</div>
 </div>
 
 <script>
-(function () {
-    "use strict";
+(function(){
+"use strict";
 
-    const TOKEN_ENDPOINT =
-        "https://8f25ee591c52e1a8afb9345860cf3a.4a.environment.api.powerplatform.com/powervirtualagents/botsbyschema/crf19_agent/directline/token?api-version=2022-03-01-preview"
-    
-const styleOptions = {
-    accent: "#1a7344",
-    primaryFont: "'Segoe UI', Tahoma, sans-serif",
-    bubbleBackground: "#f5f5f5",
-    bubbleTextColor: "#242424",
-    bubbleFromUserBackground: "#1a7344",
-    bubbleFromUserTextColor: "#ffffff",
-    hideUploadButton: true,
-    bubbleBorderRadius: 12,
-    bubbleFromUserBorderRadius: 12,
-    botAvatarInitials: "QU",
-    botAvatarBackgroundColor: "#1a7344",
-    avatarSize: 36,
-    sendBoxHeight: 50,
-    sendBoxButtonColor: "#1a7344",
-    transcriptMaxWidth: "100%" ,
-    sendBoxMaxWidth: "100%"
-};
+const TOKEN_ENDPOINT = "https://8f25ee591c52e1a8afb9345860cf3a.4a.environment.api.powerplatform.com/powervirtualagents/botsbyschema/crf19_agent/directline/token?api-version=2022-03-01-preview";
 
-    function createCustomStore() {
-        return window.WebChat.createStore(
-            {},
-            ({ dispatch }) =>
-                next =>
-                    action => {
-                        if (action.type === "DIRECT_LINE/CONNECT_FULFILLED") {
-                            dispatch({
-                                type: "DIRECT_LINE/POST_ACTIVITY",
-                                meta: { method: "keyboard" },
-                                payload: {
-                                    activity: {
-                                        type: "event",
-                                        name: "startConversation",
-                                        channelData: { postBack: true }
-                                    }
-                                }
-                            });
-                        }
+const messagesEl = document.getElementById("messages");
+const input = document.getElementById("msg-input");
+const sendBtn = document.getElementById("send-btn");
 
-                        return next(action);
-                    }
-        );
-    }
+let dlUrl = null;
+let token = null;
+let conversationId = null;
+let watermark = null;
+let polling = null;
+let waiting = false;
 
-    async function initializeChat() {
-        try {
-            const url = new URL(TOKEN_ENDPOINT);
-            const apiVersion = url.searchParams.get("api-version");
-            const environmentEndPoint = url.origin;
+function autoResize(){
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 120) + "px";
+}
+input.addEventListener("input", autoResize);
 
-            const regionalChannelSettingsURL =
-                environmentEndPoint +
-                `/powervirtualagents/regionalchannelsettings?api-version=${apiVersion}`;
+function renderMarkdown(text){
+  let html = text
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g,"<em>$1</em>")
+    .replace(/^#{3}\s(.+)/gm,"<h3>$1</h3>")
+    .replace(/^#{2}\s(.+)/gm,"<h2>$1</h2>")
+    .replace(/^#{1}\s(.+)/gm,"<h1>$1</h1>")
+    .replace(/^[-*]\s(.+)/gm,"<li>$1</li>")
+    .replace(/(<li>[\s\S]*?<\/li>)/g,"<ul>$1</ul>")
+    .replace(/<\/ul>\s*<ul>/g,"");
 
-            const settingsResponse = await fetch(regionalChannelSettingsURL);
-            const settingsData = await settingsResponse.json();
-            const directLineUrl = settingsData.channelUrlsById.directline;
+  html = html.split(/\n\n+/).map(block => {
+    if(/^<[huo]/.test(block.trim())) return block;
+    return "<p>" + block.replace(/\n/g,"<br>") + "</p>";
+  }).join("");
 
-            const conversationResponse = await fetch(TOKEN_ENDPOINT);
-            const conversationInfo = await conversationResponse.json();
+  return html;
+}
 
-            const directLine = window.WebChat.createDirectLine({
-                domain: `${directLineUrl}v3/directline`,
-                token: conversationInfo.token
-            });
+function addMessage(role, text){
+  const div = document.createElement("div");
+  div.className = "msg " + role;
+  if(role === "bot"){
+    div.innerHTML = `<div class="msg-meta"><div class="dot">QU</div><span>الحوكمة الذكية</span></div><div class="msg-body">${renderMarkdown(text)}</div>`;
+  } else {
+    const safe = text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    div.innerHTML = `<div class="msg-body">${safe}</div>`;
+  }
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return div;
+}
 
-            window.WebChat.renderWebChat(
-                {
-                    directLine,
-                    styleOptions,
-                    store: createCustomStore(),
-                    locale: "ar-SA"
-                },
-                document.getElementById("webchat")
-            );
-        } catch (err) {
-            console.error("فشل الاتصال بالآيجنت:", err);
-            const container = document.getElementById("webchat");
-            if (container) {
-                container.innerHTML =
-                    '<div style="padding:20px; text-align:center;">حدث خطأ في تحميل الحوكمة الذكية ، حاول تحديث الصفحة لاحقًا.</div>';
-            }
+function showTyping(){
+  const div = document.createElement("div");
+  div.className = "msg bot";
+  div.id = "typing-indicator";
+  div.innerHTML = `<div class="msg-meta"><div class="dot">QU</div><span>الحوكمة الذكية</span></div><div class="typing"><span></span><span></span><span></span></div>`;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function hideTyping(){
+  const t = document.getElementById("typing-indicator");
+  if(t) t.remove();
+}
+
+function setReady(ready){
+  input.disabled = !ready;
+  sendBtn.disabled = !ready;
+  input.placeholder = ready ? "اكتب رسالتك هنا..." : "جارٍ الاتصال...";
+}
+
+async function pollActivities(){
+  if(!dlUrl || !conversationId || !token) return;
+  try {
+    const url = `${dlUrl}v3/directline/conversations/${conversationId}/activities${watermark ? "?watermark="+watermark : ""}`;
+    const res = await fetch(url, {headers:{"Authorization":"Bearer "+token}});
+    if(!res.ok) return;
+    const data = await res.json();
+    if(data.activities && data.activities.length > 0){
+      let gotReply = false;
+      data.activities.forEach(act => {
+        if(act.type === "message" && act.from && act.from.role === "bot"){
+          const text = act.text || "";
+          if(text){
+            hideTyping();
+            addMessage("bot", text);
+            gotReply = true;
+            waiting = false;
+          }
         }
+      });
+      watermark = data.watermark;
     }
+  } catch(e){}
+}
 
-    function checkAndStart() {
-        if (window.WebChat && typeof window.WebChat.renderWebChat === "function") {
-            initializeChat();
-        } else {
-            setTimeout(checkAndStart, 1000);
-        }
-    }
+async function sendActivity(activity){
+  const res = await fetch(`${dlUrl}v3/directline/conversations/${conversationId}/activities`, {
+    method: "POST",
+    headers: {"Authorization":"Bearer "+token, "Content-Type":"application/json"},
+    body: JSON.stringify({...activity, from:{id:"user1",name:"User"}, locale:"ar-SA"})
+  });
+  return res.ok;
+}
 
-    if (document.readyState === "complete") {
-        checkAndStart();
-    } else {
-        window.addEventListener("load", checkAndStart);
-    }
+async function initChat(){
+  try {
+    const url = new URL(TOKEN_ENDPOINT);
+    const apiVersion = url.searchParams.get("api-version");
+    const envEndpoint = url.origin;
+
+    const settingsRes = await fetch(`${envEndpoint}/powervirtualagents/regionalchannelsettings?api-version=${apiVersion}`);
+    const settings = await settingsRes.json();
+    dlUrl = settings.channelUrlsById.directline;
+
+    const convRes = await fetch(TOKEN_ENDPOINT);
+    const convInfo = await convRes.json();
+    token = convInfo.token;
+
+    const startRes = await fetch(`${dlUrl}v3/directline/conversations`, {
+      method: "POST",
+      headers: {"Authorization":"Bearer "+token, "Content-Type":"application/json"}
+    });
+    const startData = await startRes.json();
+    conversationId = startData.conversationId;
+
+    await sendActivity({type:"event", name:"startConversation", channelData:{postBack:true}});
+
+    polling = setInterval(pollActivities, 1500);
+    setReady(true);
+  } catch(err){
+    console.error("فشل الاتصال:", err);
+    input.placeholder = "فشل الاتصال — حاول تحديث الصفحة";
+    addMessage("bot", "⚠️ حدث خطأ في الاتصال. يرجى تحديث الصفحة والمحاولة مجدداً.");
+  }
+}
+
+async function sendMessage(){
+  const text = input.value.trim();
+  if(!text || waiting) return;
+  waiting = true;
+  addMessage("user", text);
+  input.value = "";
+  autoResize();
+  showTyping();
+  await sendActivity({type:"message", text});
+}
+
+sendBtn.addEventListener("click", sendMessage);
+input.addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+});
+
+initChat();
 })();
 </script>
-
 </body>
 </html>
