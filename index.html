@@ -2,145 +2,310 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>الحوكمة الذكية - جامعة القصيم</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;justify-content:center;align-items:center;min-height:100vh}
-#chat-wrap{display:flex;flex-direction:column;width:100%;max-width:100%;height:95vh;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.1)}
-#chat-header{background:#1a7344;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
-.hav{width:34px;height:34px;background:#fff;color:#1a7344;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
-#chat-header span{font-size:16px;font-weight:600}
-#messages{flex:1;overflow-y:auto;background:#fff}
-#messages::-webkit-scrollbar{width:6px}
-#messages::-webkit-scrollbar-thumb{background:#ccc;border-radius:10px}
-.messages-inner{max-width:780px;width:100%;margin:0 auto;padding:24px 20px;display:flex;flex-direction:column;gap:20px}
-.msg{display:flex;flex-direction:column;width:100%}
-.msg.user{align-items:flex-end}
-.msg.user .msg-body{background:#1a7344;color:#fff;padding:11px 16px;border-radius:18px 18px 4px 18px;font-size:15px;line-height:1.6;max-width:70%;display:inline-block;direction:rtl;text-align:right;margin-left:auto;margin-right:0;unicode-bidi:plaintext}
-.msg.bot{align-items:flex-start}
-.msg.bot .msg-body{font-size:15px;line-height:1.8;color:#1a1a1a;width:100%}
-.msg.bot .msg-body.rtl{direction:rtl;text-align:right}
-.msg.bot .msg-body.ltr{direction:ltr;text-align:left}
-.msg.bot .msg-body p{margin-bottom:8px}
-.msg.bot .msg-body p:last-child{margin-bottom:0}
-.msg.bot .msg-body ul,.msg.bot .msg-body ol{margin:3px 0 6px}
-.msg.bot .msg-body.rtl ul,.msg.bot .msg-body.rtl ol{padding-right:20px}
-.msg.bot .msg-body.ltr ul,.msg.bot .msg-body.ltr ol{padding-left:20px}
-.msg.bot .msg-body ol{list-style:decimal}
-.msg.bot .msg-body li{margin-bottom:3px;line-height:1.7}
-.msg.bot .msg-body li>ul,.msg.bot .msg-body li>ol{margin:3px 0 2px}
-.msg.bot .msg-body.rtl li>ul,.msg.bot .msg-body.rtl li>ol{padding-right:18px}
-.msg.bot .msg-body.ltr li>ul,.msg.bot .msg-body.ltr li>ol{padding-left:18px}
-.msg.bot .msg-body li>ul{list-style:circle}
-.msg.bot .msg-body li>ul li>ul{list-style:square}
-.msg.bot .msg-body strong{font-weight:600}
-.msg.bot .msg-body h1,.msg.bot .msg-body h2,.msg.bot .msg-body h3{font-weight:600;margin:12px 0 6px}
-.msg.bot .msg-body a{color:#1a7344;text-decoration:underline;word-break:break-all}
-.msg.bot .msg-body a:hover{color:#0e4d2e}
-.msg.bot .msg-body hr{border:none;border-top:1px solid #ddd;margin:12px 0}
-#qr-outer{display:none;background:#fff;flex-shrink:0}
-#qr-outer.visible{display:block}
-#quick-replies-bar{max-width:780px;width:100%;margin:0 auto;padding:8px 20px 4px;display:flex;flex-wrap:wrap;gap:8px;direction:rtl}
-.qr-btn{background:#fff;border:1.5px solid #1a7344;color:#1a7344;padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;line-height:1.4}
-.qr-btn:hover{background:#1a7344;color:#fff}
-.typing{display:flex;gap:5px;align-items:center;padding:6px 0}
-.typing span{width:8px;height:8px;background:#1a7344;border-radius:50%;animation:blink 1.2s infinite}
-.typing span:nth-child(2){animation-delay:.2s}
-.typing span:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-/* ===== تصميم مربع الكتابة مع زر الإرسال في الجهة اليمنى ===== */
-#input-area{
-    flex-shrink: 0;
-    background: #fff;
-    padding: 0 20px 14px 20px;
+/* الخط الرسمي Arial */
+body, input, textarea, button, .qr-btn, .msg-body, .disclaimer {
+  font-family: 'Arial', 'Helvetica', 'Tahoma', 'Geneva', sans-serif;
 }
-.input-inner{
-    max-width: 780px;
-    width: 100%;
-    margin: 0 auto;
-    background: #eef2f5;    /* لون أغمق قليلاً من الأبيض */
-    border-radius: 32px;
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    padding: 6px 16px 6px 8px;   /* padding يمين أكبر قليلاً (لأن الزر الآن على اليمين) */
-    transition: all 0.2s ease;
-    border: none;
-    /* الترتيب: الزر أولاً (على اليمين) ثم حقل النص */
-    direction: rtl;
-}
-.input-inner:focus-within{
-    background: #e8edf1;
-    box-shadow: 0 0 0 2px rgba(26,115,68,0.15);
-}
-/* زر الإرسال - يظهر في أقصى اليمين (لأنه أول عنصر في الترتيب RTL) */
-#send-btn{
-    width: 40px;
-    height: 40px;
-    background: #1a7344;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: opacity 0.2s, transform 0.1s;
-    margin-bottom: 2px;
-    order: 0; /* أول عنصر */
-}
-#send-btn:hover:not(:disabled){
-    opacity: 0.85;
-    transform: scale(1.02);
-}
-#send-btn:active:not(:disabled){
-    transform: scale(0.96);
-}
-#send-btn:disabled{
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-#send-btn svg{
-    width: 18px;
-    height: 18px;
-    fill: #fff;
-    margin-right: 2px;
-}
-/* حقل النص - يأتي بعد الزر مباشرة (على يسار الزر في الترتيب RTL) */
-#msg-input{
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-size: 15px;
-    font-family: inherit;
-    padding: 10px 0;
-    resize: none;
-    max-height: 100px;
-    outline: none;
-    color: #1a1a1a;
-    line-height: 1.45;
-    order: 1;
-}
-#msg-input:disabled{
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-#msg-input::placeholder{
-    color: #9aaeb9;
-}
-/* ===== نهاية تعديل مربع الكتابة ===== */
 
-.disclaimer{
-    font-size: 11px;
-    text-align: center;
-    padding: 10px 15px 14px 15px;
-    color: #888;
-    background: #fff;
-    flex-shrink: 0;
-    line-height: 1.4;
-    border-top: none;
+/* إزالة أي هوامش خارجية وتعبئة كامل الشاشة */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #f4f6f8;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* حاوية الشات - تشغل كامل الارتفاع المتاح بدون مسافات علوية/سفلية */
+#chat-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  height: 100vh;
+  background: #fff;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+/* رأس التطبيق - يظل ثابتاً */
+#chat-header {
+  background: #1a7344;
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  font-family: 'Arial', 'Helvetica', 'Tahoma', 'Geneva', sans-serif;
+}
+
+.hav {
+  width: 34px;
+  height: 34px;
+  background: #fff;
+  color: #1a7344;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+#chat-header span {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* منطقة الرسائل - تأخذ المساحة المتبقية بدون هوامض داخلية زائدة */
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  background: #fff;
+}
+
+#messages::-webkit-scrollbar {
+  width: 6px;
+}
+#messages::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+/* الحاوية الداخلية للرسائل: ضبط padding رأسي محدود بحيث لا يسبب فراغات كبيرة */
+.messages-inner {
+  max-width: 780px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 18px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* فقاعات الرسائل */
+.msg {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.msg.user {
+  align-items: flex-end;
+}
+.msg.user .msg-body {
+  background: #1a7344;
+  color: #fff;
+  padding: 11px 16px;
+  border-radius: 18px 18px 4px 18px;
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 70%;
+  display: inline-block;
+  direction: rtl;
+  text-align: right;
+  margin-left: auto;
+  margin-right: 0;
+  unicode-bidi: plaintext;
+}
+
+.msg.bot {
+  align-items: flex-start;
+}
+.msg.bot .msg-body {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #1a1a1a;
+  width: 100%;
+}
+.msg.bot .msg-body.rtl { direction: rtl; text-align: right; }
+.msg.bot .msg-body.ltr { direction: ltr; text-align: left; }
+.msg.bot .msg-body p { margin-bottom: 8px; }
+.msg.bot .msg-body p:last-child { margin-bottom: 0; }
+.msg.bot .msg-body ul, .msg.bot .msg-body ol { margin: 3px 0 6px; }
+.msg.bot .msg-body.rtl ul, .msg.bot .msg-body.rtl ol { padding-right: 20px; }
+.msg.bot .msg-body.ltr ul, .msg.bot .msg-body.ltr ol { padding-left: 20px; }
+.msg.bot .msg-body ol { list-style: decimal; }
+.msg.bot .msg-body li { margin-bottom: 3px; line-height: 1.7; }
+.msg.bot .msg-body li>ul, .msg.bot .msg-body li>ol { margin: 3px 0 2px; }
+.msg.bot .msg-body.rtl li>ul, .msg.bot .msg-body.rtl li>ol { padding-right: 18px; }
+.msg.bot .msg-body.ltr li>ul, .msg.bot .msg-body.ltr li>ol { padding-left: 18px; }
+.msg.bot .msg-body li>ul { list-style: circle; }
+.msg.bot .msg-body li>ul li>ul { list-style: square; }
+.msg.bot .msg-body strong { font-weight: 600; }
+.msg.bot .msg-body h1, .msg.bot .msg-body h2, .msg.bot .msg-body h3 { font-weight: 600; margin: 12px 0 6px; }
+.msg.bot .msg-body a { color: #1a7344; text-decoration: underline; word-break: break-all; }
+.msg.bot .msg-body a:hover { color: #0e4d2e; }
+.msg.bot .msg-body hr { border: none; border-top: 1px solid #ddd; margin: 12px 0; }
+
+/* الردود السريعة */
+#qr-outer {
+  display: none;
+  background: #fff;
+  flex-shrink: 0;
+}
+#qr-outer.visible { display: block; }
+#quick-replies-bar {
+  max-width: 780px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 8px 20px 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  direction: rtl;
+}
+.qr-btn {
+  background: #fff;
+  border: 1.5px solid #1a7344;
+  color: #1a7344;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  line-height: 1.4;
+}
+.qr-btn:hover {
+  background: #1a7344;
+  color: #fff;
+}
+
+/* مؤشر الكتابة */
+.typing {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 6px 0;
+}
+.typing span {
+  width: 8px;
+  height: 8px;
+  background: #1a7344;
+  border-radius: 50%;
+  animation: blink 1.2s infinite;
+}
+.typing span:nth-child(2) { animation-delay: .2s; }
+.typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes blink {
+  0%,80%,100% { opacity: .2; }
+  40% { opacity: 1; }
+}
+
+/* ===== مربع الكتابة بتصميم ممتد بدون فراغات علوية وسفلية ===== */
+#input-area {
+  flex-shrink: 0;
+  background: #fff;
+  padding: 0 20px 6px 20px;
+  margin: 0;
+}
+
+.input-inner {
+  max-width: 780px;
+  width: 100%;
+  margin: 0 auto;
+  background: #eef2f5;
+  border-radius: 32px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 6px 16px 6px 8px;
+  transition: all 0.2s ease;
+  border: none;
+  direction: rtl;
+}
+
+.input-inner:focus-within {
+  background: #e8edf1;
+  box-shadow: 0 0 0 2px rgba(26,115,68,0.15);
+}
+
+/* زر الإرسال */
+#send-btn {
+  width: 40px;
+  height: 40px;
+  background: #1a7344;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity 0.2s, transform 0.1s;
+  margin-bottom: 2px;
+  order: 0;
+}
+#send-btn:hover:not(:disabled) {
+  opacity: 0.85;
+  transform: scale(1.02);
+}
+#send-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+#send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+#send-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: #fff;
+  margin-right: 2px;
+}
+
+/* حقل النص */
+#msg-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  padding: 10px 0;
+  resize: none;
+  max-height: 100px;
+  outline: none;
+  color: #1a1a1a;
+  line-height: 1.45;
+  order: 1;
+}
+#msg-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+#msg-input::placeholder {
+  color: #9aaeb9;
+}
+
+/* تذييل */
+.disclaimer {
+  font-size: 11px;
+  text-align: center;
+  padding: 4px 15px 6px 15px;
+  color: #888;
+  background: #fff;
+  flex-shrink: 0;
+  line-height: 1.3;
+  border-top: none;
+  margin: 0;
 }
 </style>
 </head>
@@ -164,7 +329,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
       <textarea id="msg-input" rows="1" placeholder="جارٍ الاتصال..." disabled></textarea>
     </div>
   </div>
-  <div class="disclaimer">هذه الخدمة أداة استرشادية تعمل بالذكاء الاصطناعي للمساعدة فقط.</div>
+  <div class="disclaimer">هذه الخدمة أداة استرشادية تعمل بالذكاء الاصطناعي وتستخدم للمساعدة فقط.</div>
 </div>
 
 <script>
@@ -204,9 +369,6 @@ function isRTL(text){
   return rtl>=ltr;
 }
 
-/* ══════════════════════════════════════
-   Markdown renderer
-══════════════════════════════════════ */
 function renderMarkdown(raw){
   const LINK_MD=/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
   const LINK_URL=/https?:\/\/[^\s<>"')\]،,،]+/g;
@@ -323,9 +485,6 @@ function wrapParagraphs(html){
   }).filter(Boolean).join("");
 }
 
-/* ══════════════════════════════════════
-   Quick Replies
-══════════════════════════════════════ */
 function setQuickReplies(actions){
   qrBar.innerHTML="";
   if(!actions||!actions.length){qrOuter.classList.remove("visible");return;}
@@ -341,9 +500,6 @@ function setQuickReplies(actions){
 }
 function clearQuickReplies(){qrBar.innerHTML="";qrOuter.classList.remove("visible");}
 
-/* ══════════════════════════════════════
-   Messages
-══════════════════════════════════════ */
 function addMessage(role,text,suggestedActions){
   const div=document.createElement("div");
   div.className="msg "+role;
@@ -376,9 +532,6 @@ function setReady(ready){
   input.placeholder=ready?"اكتب رسالتك هنا...":"جارٍ الاتصال...";
 }
 
-/* ══════════════════════════════════════
-   Direct Line
-══════════════════════════════════════ */
 async function pollActivities(){
   if(!dlUrl||!conversationId||!token)return;
   try{
