@@ -27,6 +27,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 .msg.bot .msg-body.rtl ul,.msg.bot .msg-body.rtl ol{padding-right:22px}
 .msg.bot .msg-body.ltr ul,.msg.bot .msg-body.ltr ol{padding-left:22px}
 .msg.bot .msg-body li{margin-bottom:6px;line-height:1.7}
+.msg.bot .msg-body li ul{margin:4px 0 4px 0}
 .msg.bot .msg-body strong{font-weight:600}
 .msg.bot .msg-body h1,.msg.bot .msg-body h2,.msg.bot .msg-body h3{font-weight:600;margin:12px 0 6px}
 .msg.bot .msg-body a{color:#1a7344;text-decoration:underline;word-break:break-all}
@@ -104,24 +105,98 @@ function isRTL(text){
   return rtl >= ltr;
 }
 
-/* ── تحويل النص إلى HTML آمن مع دعم Markdown والروابط ── */
+/* ── دالة تطبيق Markdown مع دعم القوائم المتداخلة بشكل صحيح ── */
+function applyMarkdown(s){
+  // معالجة التنسيقات الأساسية
+  let result = s
+    .replace(/\*\*(.+?)\*\*/g,  "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g,      "<em>$1</em>")
+    .replace(/^###\s(.+)/gm,    "<h3>$1</h3>")
+    .replace(/^##\s(.+)/gm,     "<h2>$1</h2>")
+    .replace(/^#\s(.+)/gm,      "<h1>$1</h1>");
+  
+  // معالجة القوائم المتداخلة - تحديد مستويات التداخل بناءً على المسافات البادئة
+  const lines = result.split('\n');
+  const processed = [];
+  const listStack = []; // تتبع مستويات القوائم المفتوحة
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // كشف سطر قائمة: يبدأ بمسافات ثم - أو * ثم مسافة ثم محتوى
+    const listMatch = line.match(/^(\s*)[-*]\s+(.+)$/);
+    
+    if (listMatch) {
+      const indent = listMatch[1].length;
+      const content = listMatch[2];
+      // مستوى التداخل = عدد المسافات / 2 (كل مسافتين = مستوى واحد)
+      const level = Math.floor(indent / 2);
+      
+      // إغلاق القوائم ذات المستوى الأعلى من المستوى الحالي
+      while (listStack.length > level) {
+        processed.push('</ul>');
+        listStack.pop();
+      }
+      
+      // فتح قوائم جديدة إذا كان المستوى المطلوب أعمق من المستوى الحالي
+      while (listStack.length < level) {
+        processed.push('<ul style="margin:4px 0 4px 0;padding-right:1.5rem">');
+        listStack.push(level);
+      }
+      
+      // إذا لم تكن هناك قائمة مفتوحة من الأساس، نفتح قائمة جديدة
+      if (listStack.length === 0) {
+        processed.push('<ul style="margin:8px 0">');
+        listStack.push(0);
+      }
+      
+      processed.push(`<li>${content}</li>`);
+    } else {
+      // عند مواجهة سطر ليس قائمة، نغلق جميع القوائم المفتوحة
+      while (listStack.length > 0) {
+        processed.push('</ul>');
+        listStack.pop();
+      }
+      processed.push(line);
+    }
+  }
+  
+  // إغلاق أي قوائم متبقية في نهاية المعالجة
+  while (listStack.length > 0) {
+    processed.push('</ul>');
+    listStack.pop();
+  }
+  
+  return processed.join('\n');
+}
+
+function escHtml(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function escAttr(s){
+  return s.replace(/"/g,"&quot;");
+}
+
+/* ── تحويل النص إلى HTML آمن مع دعم الروابط والصور ── */
 function renderMarkdown(raw){
-  // 1. قسّم النص إلى أجزاء: روابط markdown [text](url)، روابط عادية، نص عادي
+  // معالجة الروابط بصيغة Markdown [text](url) والروابط العادية
   const LINK_MD  = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
   const LINK_URL = /https?:\/\/[^\s<>"')\]،,،]+/g;
 
-  // نجمع كل المقاطع في مصفوفة: {type:'html'|'text', value}
   const segments = [];
   let last = 0;
 
-  // دمج كلا النمطين بترتيب الظهور
+  // جمع جميع الروابط مع مواضعها
   const combined = [];
   let m;
+  
   LINK_MD.lastIndex = 0;
-  while((m = LINK_MD.exec(raw)) !== null)  combined.push({idx:m.index, len:m[0].length, type:'md',  label:m[1], url:m[2]});
+  while((m = LINK_MD.exec(raw)) !== null) {
+    combined.push({idx:m.index, len:m[0].length, type:'md', label:m[1], url:m[2]});
+  }
+  
   LINK_URL.lastIndex = 0;
   while((m = LINK_URL.exec(raw)) !== null){
-    // تأكد أنه ليس داخل رابط markdown معالَج
     const inside = combined.some(c => c.type==='md' && m.index >= c.idx && m.index < c.idx+c.len);
     if(!inside) combined.push({idx:m.index, len:m[0].length, type:'url', url:m[0]});
   }
@@ -129,47 +204,34 @@ function renderMarkdown(raw){
 
   for(const c of combined){
     if(c.idx > last) segments.push({type:'text', value: raw.slice(last, c.idx)});
-    const href = c.url.replace(/[.,،؟?!:;'")\]]+$/, ''); // أزل علامات الترقيم من النهاية
+    let href = c.url;
+    // تنظيف الرابط من علامات الترقيم في النهاية
+    href = href.replace(/[.,،؟?!:;'")\]]+$/, '');
     const label = c.type==='md' ? escHtml(c.label) : escHtml(href);
     segments.push({type:'html', value:`<a href="${escAttr(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`});
     last = c.idx + c.len;
   }
   if(last < raw.length) segments.push({type:'text', value: raw.slice(last)});
 
-  // 2. طبّق Markdown على أجزاء النص فقط
+  // معالجة النص العادي مع الحفاظ على المسافات البادئة للقوائم المتداخلة
   const processed = segments.map(s => {
     if(s.type === 'html') return s.value;
-    return applyMarkdown(escHtml(s.value));
+    let text = s.value;
+    // تحويل المسافات البادئة في بداية السطور إلى مسافات ثابتة للقوائم المتداخلة
+    text = text.replace(/^([ ]+)/gm, (match) => {
+      return match;
+    });
+    return applyMarkdown(escHtml(text));
   }).join('');
 
-  // 3. لفّ الفقرات
   return wrapParagraphs(processed);
-}
-
-function escHtml(s){
-  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-}
-function escAttr(s){
-  return s.replace(/"/g,"&quot;");
-}
-
-function applyMarkdown(s){
-  return s
-    .replace(/\*\*(.+?)\*\*/g,  "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g,      "<em>$1</em>")
-    .replace(/^###\s(.+)/gm,    "<h3>$1</h3>")
-    .replace(/^##\s(.+)/gm,     "<h2>$1</h2>")
-    .replace(/^#\s(.+)/gm,      "<h1>$1</h1>")
-    .replace(/^[-*]\s(.+)/gm,   "<li>$1</li>")
-    .replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>")
-    .replace(/<\/ul>\s*<ul>/g,  "");
 }
 
 function wrapParagraphs(html){
   return html.split(/\n\n+/).map(block => {
     const t = block.trim();
     if(!t) return "";
-    if(/^<[huol]/.test(t)) return t;
+    if(/^<[huol]|<h\d/.test(t)) return t;
     return "<p>" + t.replace(/\n/g,"<br>") + "</p>";
   }).filter(Boolean).join("");
 }
@@ -225,7 +287,7 @@ function setReady(ready){
   input.placeholder = ready ? "اكتب رسالتك هنا..." : "جارٍ الاتصال...";
 }
 
-/* ── Polling ── */
+/* ── Polling لاستقبال الرسائل من البوت ── */
 async function pollActivities(){
   if(!dlUrl || !conversationId || !token) return;
   try {
@@ -247,7 +309,7 @@ async function pollActivities(){
   } catch(e){}
 }
 
-/* ── إرسال Activity ── */
+/* ── إرسال Activity إلى البوت ── */
 async function postActivity(activity){
   await fetch(`${dlUrl}v3/directline/conversations/${conversationId}/activities`, {
     method:"POST",
@@ -274,7 +336,7 @@ async function sendMessage(){
   await sendText(text);
 }
 
-/* ── تهيئة ── */
+/* ── تهيئة الاتصال بالبوت ── */
 async function initChat(){
   try {
     const url = new URL(TOKEN_ENDPOINT);
