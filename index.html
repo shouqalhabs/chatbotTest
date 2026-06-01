@@ -11,12 +11,10 @@
   padding: 0;
 }
 
-/* الخط الرسمي Arial */
 body, input, textarea, button, .qr-btn, .msg-body, .disclaimer {
   font-family: 'Arial', 'Helvetica', 'Tahoma', 'Geneva', sans-serif;
 }
 
-/* إزالة أي هوامش خارجية وتعبئة كامل الشاشة */
 html, body {
   height: 100%;
   margin: 0;
@@ -32,7 +30,6 @@ body {
   padding: 0;
 }
 
-/* حاوية الشات - تشغل كامل الارتفاع المتاح بدون مسافات علوية/سفلية */
 #chat-wrap {
   display: flex;
   flex-direction: column;
@@ -45,7 +42,6 @@ body {
   box-shadow: none;
 }
 
-/* رأس التطبيق - يظل ثابتاً */
 #chat-header {
   background: #1a7344;
   color: #fff;
@@ -76,7 +72,6 @@ body {
   font-weight: 600;
 }
 
-/* منطقة الرسائل - تأخذ المساحة المتبقية بدون هوامض داخلية زائدة */
 #messages {
   flex: 1;
   overflow-y: auto;
@@ -91,7 +86,6 @@ body {
   border-radius: 10px;
 }
 
-/* الحاوية الداخلية للرسائل: ضبط padding رأسي محدود بحيث لا يسبب فراغات كبيرة */
 .messages-inner {
   max-width: 780px;
   width: 100%;
@@ -102,13 +96,21 @@ body {
   gap: 20px;
 }
 
-/* فقاعات الرسائل */
 .msg {
   display: flex;
   flex-direction: column;
   width: 100%;
 }
 
+/* الطابع الزمني - مشترك */
+.msg-time {
+  font-size: 11px;
+  color: #9aaeb9;
+  margin-top: 4px;
+  line-height: 1;
+}
+
+/* رسائل المستخدم */
 .msg.user {
   align-items: flex-end;
 }
@@ -127,7 +129,13 @@ body {
   margin-right: 0;
   unicode-bidi: plaintext;
 }
+/* وقت المستخدم: تحت الرسالة، محاذاة لليمين */
+.msg.user .msg-time {
+  align-self: flex-start;
+  padding-left: 4px;
+}
 
+/* رسائل البوت */
 .msg.bot {
   align-items: flex-start;
 }
@@ -137,6 +145,17 @@ body {
   color: #1a1a1a;
   width: 100%;
 }
+/* وقت البوت: يتبع اتجاه النص — rtl=يمين (flex-start في RTL)، ltr=يسار (flex-end في RTL) */
+.msg.bot .msg-time {
+  align-self: flex-end;
+  padding-right: 4px;
+}
+.msg.bot .msg-time.rtl {
+  align-self: flex-start;
+  padding-right: 0;
+  padding-left: 4px;
+}
+
 .msg.bot .msg-body.rtl { direction: rtl; text-align: right; }
 .msg.bot .msg-body.ltr { direction: ltr; text-align: left; }
 .msg.bot .msg-body p { margin-bottom: 8px; }
@@ -157,7 +176,6 @@ body {
 .msg.bot .msg-body a:hover { color: #0e4d2e; }
 .msg.bot .msg-body hr { border: none; border-top: 1px solid #ddd; margin: 12px 0; }
 
-/* الردود السريعة */
 #qr-outer {
   display: none;
   background: #fff;
@@ -190,7 +208,6 @@ body {
   color: #fff;
 }
 
-/* مؤشر الكتابة */
 .typing {
   display: flex;
   gap: 5px;
@@ -211,7 +228,6 @@ body {
   40% { opacity: 1; }
 }
 
-/* ===== مربع الكتابة بتصميم ممتد بدون فراغات علوية وسفلية ===== */
 #input-area {
   flex-shrink: 0;
   background: #fff;
@@ -239,7 +255,6 @@ body {
   box-shadow: 0 0 0 2px rgba(26,115,68,0.15);
 }
 
-/* زر الإرسال */
 #send-btn {
   width: 40px;
   height: 40px;
@@ -273,7 +288,6 @@ body {
   margin-right: 2px;
 }
 
-/* حقل النص */
 #msg-input {
   flex: 1;
   border: none;
@@ -295,7 +309,6 @@ body {
   color: #9aaeb9;
 }
 
-/* تذييل */
 .disclaimer {
   font-size: 11px;
   text-align: center;
@@ -347,6 +360,31 @@ const sendBtn=document.getElementById("send-btn");
 
 let dlUrl=null,token=null,conversationId=null,watermark=null,waiting=false;
 const seenActivityIds=new Set();
+
+/* ===== الطابع الزمني ===== */
+function formatTime(date){
+  const now=new Date();
+  const diff=Math.floor((now-date)/1000);
+  if(diff<60) return "الآن";
+  if(diff<3600){
+    const m=Math.floor(diff/60);
+    return "منذ "+(m===1?"دقيقة":m===2?"دقيقتين":m<=10?m+" دقائق":m+" دقيقة");
+  }
+  if(diff<86400){
+    const h=Math.floor(diff/3600);
+    return "منذ "+(h===1?"ساعة":h===2?"ساعتين":h<=10?h+" ساعات":h+" ساعة");
+  }
+  return date.toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"});
+}
+
+/* تحديث كل الطوابع الزمنية دورياً */
+function refreshTimestamps(){
+  document.querySelectorAll(".msg-time[data-ts]").forEach(el=>{
+    const ts=new Date(parseInt(el.dataset.ts,10));
+    el.textContent=formatTime(ts);
+  });
+}
+setInterval(refreshTimestamps,30000);
 
 function updateInputDirection(){
   const first=input.value.trimStart().charAt(0);
@@ -501,17 +539,26 @@ function setQuickReplies(actions){
 function clearQuickReplies(){qrBar.innerHTML="";qrOuter.classList.remove("visible");}
 
 function addMessage(role,text,suggestedActions){
+  const now=new Date();
+  const tsMs=now.getTime();
+  const timeStr=formatTime(now);
+
   const div=document.createElement("div");
   div.className="msg "+role;
+
   if(role==="bot"){
     const dir=isRTL(text)?"rtl":"ltr";
-    div.innerHTML=`<div class="msg-body ${dir}">${renderMarkdown(text)}</div>`;
+    div.innerHTML=
+      `<div class="msg-body ${dir}">${renderMarkdown(text)}</div>`+
+      `<span class="msg-time ${dir}" data-ts="${tsMs}">${timeStr}</span>`;
     messagesInner.appendChild(div);
     if(suggestedActions&&suggestedActions.actions&&suggestedActions.actions.length)
       setQuickReplies(suggestedActions.actions);
     else clearQuickReplies();
   } else {
-    div.innerHTML=`<div class="msg-body">${escHtml(text)}</div>`;
+    div.innerHTML=
+      `<div class="msg-body">${escHtml(text)}</div>`+
+      `<span class="msg-time" data-ts="${tsMs}">${timeStr}</span>`;
     messagesInner.appendChild(div);
   }
   messagesEl.scrollTop=messagesEl.scrollHeight;
