@@ -11,15 +11,10 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 #chat-header{background:#1a7344;color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
 .hav{width:34px;height:34px;background:#fff;color:#1a7344;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
 #chat-header span{font-size:16px;font-weight:600}
-
-/* الـ wrapper الداخلي اللي يضيّق المحتوى */
-.inner{max-width:780px;width:100%;margin:0 auto;padding:0 20px}
-
 #messages{flex:1;overflow-y:auto;background:#fff}
 #messages::-webkit-scrollbar{width:6px}
 #messages::-webkit-scrollbar-thumb{background:#ccc;border-radius:10px}
 .messages-inner{max-width:780px;width:100%;margin:0 auto;padding:24px 20px;display:flex;flex-direction:column;gap:20px}
-
 .msg{display:flex;flex-direction:column;width:100%}
 .msg.user{align-items:flex-end}
 .msg.user .msg-body{background:#1a7344;color:#fff;padding:11px 16px;border-radius:18px 18px 4px 18px;font-size:15px;line-height:1.6;max-width:70%;display:inline-block;direction:rtl;text-align:right;margin-left:auto;margin-right:0;unicode-bidi:plaintext}
@@ -27,25 +22,29 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 .msg.bot .msg-body{font-size:15px;line-height:1.8;color:#1a1a1a;width:100%}
 .msg.bot .msg-body.rtl{direction:rtl;text-align:right}
 .msg.bot .msg-body.ltr{direction:ltr;text-align:left}
-.msg.bot .msg-body p{margin-bottom:10px}
+.msg.bot .msg-body p{margin-bottom:8px}
 .msg.bot .msg-body p:last-child{margin-bottom:0}
-.msg.bot .msg-body ul,.msg.bot .msg-body ol{margin:6px 0 10px}
-.msg.bot .msg-body.rtl ul,.msg.bot .msg-body.rtl ol{padding-right:24px;margin-right:8px}
-.msg.bot .msg-body.ltr ul,.msg.bot .msg-body.ltr ol{padding-left:24px;margin-left:8px}
-.msg.bot .msg-body li{margin-bottom:5px;line-height:1.7;padding-right:4px}
-.msg.bot .msg-body ol{list-style:decimal inside none}
-.msg.bot .msg-body.rtl ol{list-style-position:inside}
+/* ─── قوائم: مسافات مضغوطة ─── */
+.msg.bot .msg-body ul,.msg.bot .msg-body ol{margin:3px 0 6px}
+.msg.bot .msg-body.rtl ul,.msg.bot .msg-body.rtl ol{padding-right:20px}
+.msg.bot .msg-body.ltr ul,.msg.bot .msg-body.ltr ol{padding-left:20px}
+.msg.bot .msg-body ol{list-style:decimal}
+.msg.bot .msg-body li{margin-bottom:3px;line-height:1.7}
+/* ─── قوائم متداخلة: مسافة بادئة ─── */
+.msg.bot .msg-body li>ul,.msg.bot .msg-body li>ol{margin:3px 0 2px}
+.msg.bot .msg-body.rtl li>ul,.msg.bot .msg-body.rtl li>ol{padding-right:18px}
+.msg.bot .msg-body.ltr li>ul,.msg.bot .msg-body.ltr li>ol{padding-left:18px}
+.msg.bot .msg-body li>ul{list-style:circle}
+.msg.bot .msg-body li>ul li>ul{list-style:square}
 .msg.bot .msg-body strong{font-weight:600}
 .msg.bot .msg-body h1,.msg.bot .msg-body h2,.msg.bot .msg-body h3{font-weight:600;margin:12px 0 6px}
 .msg.bot .msg-body a{color:#1a7344;text-decoration:underline;word-break:break-all}
 .msg.bot .msg-body a:hover{color:#0e4d2e}
 .msg.bot .msg-body hr{border:none;border-top:1px solid #ddd;margin:12px 0}
-
 #quick-replies-bar{display:flex;flex-wrap:wrap;gap:8px;direction:rtl;background:#fff;flex-shrink:0}
 #quick-replies-bar:not(:empty){padding:8px 0 0}
-.qr-wrap{max-width:780px;width:100%;margin:0 auto;padding:0 20px 0}
+.qr-wrap{max-width:780px;width:100%;margin:0 auto;padding:0 20px}
 .qr-wrap:has(#quick-replies-bar:empty){display:none}
-
 .qr-btn{background:#fff;border:1.5px solid #1a7344;color:#1a7344;padding:7px 14px;border-radius:20px;font-size:13px;cursor:pointer;font-family:inherit;transition:background .15s,color .15s;line-height:1.4}
 .qr-btn:hover{background:#1a7344;color:#fff}
 .typing{display:flex;gap:5px;align-items:center;padding:6px 0}
@@ -53,10 +52,8 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 .typing span:nth-child(2){animation-delay:.2s}
 .typing span:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
-
 #input-area{border-top:1px solid #eee;flex-shrink:0;background:#fff}
 .input-inner{max-width:780px;width:100%;margin:0 auto;padding:10px 20px 14px;display:flex;gap:10px;align-items:flex-end}
-
 #msg-input{flex:1;border:1px solid #ddd;border-radius:22px;padding:11px 18px;font-size:15px;resize:none;max-height:120px;outline:none;background:#f9f9f9;color:#1a1a1a;font-family:inherit;line-height:1.5;transition:border-color .2s}
 #msg-input:focus{border-color:#1a7344;background:#fff}
 #send-btn{width:42px;height:42px;background:#1a7344;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .2s}
@@ -92,50 +89,53 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f4f6f8;display:flex;ju
 (function(){
 "use strict";
 
-const TOKEN_ENDPOINT = "https://8f25ee591c52e1a8afb9345860cf3a.4a.environment.api.powerplatform.com/powervirtualagents/botsbyschema/crf19_agent/directline/token?api-version=2022-03-01-preview";
+const TOKEN_ENDPOINT="https://8f25ee591c52e1a8afb9345860cf3a.4a.environment.api.powerplatform.com/powervirtualagents/botsbyschema/crf19_agent/directline/token?api-version=2022-03-01-preview";
 
-const messagesEl = document.getElementById("messages");
-const messagesInner = document.getElementById("messages-inner");
-const qrBar     = document.getElementById("quick-replies-bar");
-const input     = document.getElementById("msg-input");
-const sendBtn   = document.getElementById("send-btn");
+const messagesEl=document.getElementById("messages");
+const messagesInner=document.getElementById("messages-inner");
+const qrBar=document.getElementById("quick-replies-bar");
+const input=document.getElementById("msg-input");
+const sendBtn=document.getElementById("send-btn");
 
-let dlUrl = null, token = null, conversationId = null, watermark = null, waiting = false;
-const seenActivityIds = new Set();
+let dlUrl=null,token=null,conversationId=null,watermark=null,waiting=false;
+const seenActivityIds=new Set();
 
 function updateInputDirection(){
-  const first = input.value.trimStart().charAt(0);
-  const isAr = /[\u0600-\u06FF]/.test(first);
-  input.style.direction  = (!first || isAr) ? "rtl" : "ltr";
-  input.style.textAlign  = (!first || isAr) ? "right" : "left";
+  const first=input.value.trimStart().charAt(0);
+  const isAr=/[\u0600-\u06FF]/.test(first);
+  input.style.direction=(!first||isAr)?"rtl":"ltr";
+  input.style.textAlign=(!first||isAr)?"right":"left";
 }
-input.addEventListener("input", updateInputDirection);
-input.addEventListener("focus", updateInputDirection);
+input.addEventListener("input",updateInputDirection);
+input.addEventListener("focus",updateInputDirection);
 
 function autoResize(){
-  input.style.height = "auto";
-  input.style.height = Math.min(input.scrollHeight, 120) + "px";
+  input.style.height="auto";
+  input.style.height=Math.min(input.scrollHeight,120)+"px";
 }
-input.addEventListener("input", autoResize);
+input.addEventListener("input",autoResize);
 
 function isRTL(text){
-  const rtl = (text.match(/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/g)||[]).length;
-  const ltr = (text.match(/[a-zA-Z]/g)||[]).length;
-  return rtl >= ltr;
+  const rtl=(text.match(/[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/g)||[]).length;
+  const ltr=(text.match(/[a-zA-Z]/g)||[]).length;
+  return rtl>=ltr;
 }
 
+/* ══════════════════════════════════════
+   Markdown renderer
+══════════════════════════════════════ */
 function renderMarkdown(raw){
-  const LINK_MD  = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
-  const LINK_URL = /https?:\/\/[^\s<>"')\]،,،]+/g;
-  const segments = [];
-  let last = 0;
-  const combined = [];
+  const LINK_MD=/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  const LINK_URL=/https?:\/\/[^\s<>"')\]،,،]+/g;
+  const segments=[];
+  let last=0;
+  const combined=[];
   let m;
-  LINK_MD.lastIndex = 0;
-  while((m = LINK_MD.exec(raw)) !== null) combined.push({idx:m.index,len:m[0].length,type:'md',label:m[1],url:m[2]});
-  LINK_URL.lastIndex = 0;
-  while((m = LINK_URL.exec(raw)) !== null){
-    const inside = combined.some(c=>c.type==='md'&&m.index>=c.idx&&m.index<c.idx+c.len);
+  LINK_MD.lastIndex=0;
+  while((m=LINK_MD.exec(raw))!==null) combined.push({idx:m.index,len:m[0].length,type:'md',label:m[1],url:m[2]});
+  LINK_URL.lastIndex=0;
+  while((m=LINK_URL.exec(raw))!==null){
+    const inside=combined.some(c=>c.type==='md'&&m.index>=c.idx&&m.index<c.idx+c.len);
     if(!inside) combined.push({idx:m.index,len:m[0].length,type:'url',url:m[0]});
   }
   combined.sort((a,b)=>a.idx-b.idx);
@@ -147,15 +147,19 @@ function renderMarkdown(raw){
     last=c.idx+c.len;
   }
   if(last<raw.length) segments.push({type:'text',value:raw.slice(last)});
-  const processed=segments.map(s=>{if(s.type==='html')return s.value;return applyMarkdown(escHtml(s.value));}).join('');
+  const processed=segments.map(s=>{
+    if(s.type==='html') return s.value;
+    return applyMarkdown(escHtml(s.value));
+  }).join('');
   return wrapParagraphs(processed);
 }
 
 function escHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function escAttr(s){return s.replace(/"/g,"&quot;");}
 
+/* ── applyMarkdown: معالجة النصوص غير القوائم أولاً ثم القوائم ── */
 function applyMarkdown(s){
-  return s
+  let t=s
     .replace(/^---$/gm,"<hr>")
     .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>")
     .replace(/\*(.+?)\*/g,"<em>$1</em>")
@@ -163,22 +167,91 @@ function applyMarkdown(s){
     .replace(/^##\s(.+)/gm,"<h2>$1</h2>")
     .replace(/^#\s(.+)/gm,"<h1>$1</h1>")
     .replace(/^(\d+)\.\s(.+)/gm,"<oli>$2</oli>")
-    .replace(/^[-*]\s(.+)/gm,"<li>$1</li>")
-    .replace(/(<li>[\s\S]*?<\/li>(?:\s*<li>[\s\S]*?<\/li>)*)/g,"<ul>$1</ul>")
-    .replace(/(<oli>[\s\S]*?<\/oli>(?:\s*<oli>[\s\S]*?<\/oli>)*)/g,(match)=>"<ol>"+match.replace(/<oli>/g,"<li>").replace(/<\/oli>/g,"</li>")+"</ol>")
-    .replace(/<\/ul>\s*<ul>/g,"")
-    .replace(/<\/ol>\s*<ol>/g,"");
+    .replace(/(<oli>[\s\S]*?<\/oli>(?:\s*<oli>[\s\S]*?<\/oli>)*)/g,(m)=>
+      "<ol>"+m.replace(/<oli>/g,"<li>").replace(/<\/oli>/g,"</li>")+"</ol>");
+  // بناء القوائم المتداخلة (يدعم • و - و *)
+  return buildNestedLists(t);
+}
+
+/* ── جمع سطور القوائم المتجاورة (مع تخطي الأسطر الفارغة بين العناصر) ── */
+function buildNestedLists(text){
+  const lines=text.split('\n');
+  const out=[];
+  let i=0;
+  while(i<lines.length){
+    if(isListLine(lines[i])){
+      // اجمع كل عناصر هذه القائمة، متخطياً الأسطر الفارغة بين العناصر
+      const rawItems=[];
+      let j=i;
+      while(j<lines.length){
+        if(isListLine(lines[j])){
+          rawItems.push(lines[j]);
+          j++;
+        } else if(lines[j].trim()===''){
+          // اطّلع للأمام: هل تستمر القائمة؟
+          let peek=j+1;
+          while(peek<lines.length&&lines[peek].trim()==='') peek++;
+          if(peek<lines.length&&isListLine(lines[peek])){
+            j=peek; // تجاوز الأسطر الفارغة
+          } else break;
+        } else break;
+      }
+      // حوّل السطور إلى عناصر {ind, txt}
+      const items=rawItems.map(l=>{
+        const m=l.match(/^(\s*)[-*•]\s+(.*)/);
+        return m?{ind:m[1].length,txt:m[2]}:null;
+      }).filter(Boolean);
+      // أضف سطراً فارغاً قبل القائمة لفصلها عن الفقرة السابقة
+      if(out.length>0) out.push('');
+      out.push(buildLevel(items,0,0)[0]);
+      out.push('');
+      i=j;
+    } else {
+      out.push(lines[i]);
+      i++;
+    }
+  }
+  return out.join('\n');
+}
+
+function isListLine(line){
+  return /^\s*[-*•]\s/.test(line);
+}
+
+/* ── بناء <ul> متداخل بشكل تعاودي ── */
+function buildLevel(items,start,base){
+  let html='<ul>';
+  let i=start;
+  while(i<items.length){
+    const it=items[i];
+    if(it.ind<base) break;       // عاد لمستوى أعلى → أنهِ
+    if(it.ind>base){i++;continue;} // لا يجب الوصول هنا عادةً
+    html+='<li>'+it.txt;
+    // هل يوجد عناصر أعمق تالياً؟
+    if(i+1<items.length&&items[i+1].ind>it.ind){
+      const[nested,ni]=buildLevel(items,i+1,items[i+1].ind);
+      html+=nested;
+      i=ni;
+    } else {
+      i++;
+    }
+    html+='</li>';
+  }
+  return[html+'</ul>',i];
 }
 
 function wrapParagraphs(html){
   return html.split(/\n\n+/).map(block=>{
     const t=block.trim();
-    if(!t)return"";
-    if(/^<[huol]/.test(t))return t;
+    if(!t) return"";
+    if(/^<[huol]/.test(t)) return t;
     return"<p>"+t.replace(/\n/g,"<br>")+"</p>";
   }).filter(Boolean).join("");
 }
 
+/* ══════════════════════════════════════
+   Quick Replies
+══════════════════════════════════════ */
 function setQuickReplies(actions){
   qrBar.innerHTML="";
   if(!actions||!actions.length)return;
@@ -193,6 +266,9 @@ function setQuickReplies(actions){
 }
 function clearQuickReplies(){qrBar.innerHTML="";}
 
+/* ══════════════════════════════════════
+   Messages
+══════════════════════════════════════ */
 function addMessage(role,text,suggestedActions){
   const div=document.createElement("div");
   div.className="msg "+role;
@@ -200,7 +276,8 @@ function addMessage(role,text,suggestedActions){
     const dir=isRTL(text)?"rtl":"ltr";
     div.innerHTML=`<div class="msg-body ${dir}">${renderMarkdown(text)}</div>`;
     messagesInner.appendChild(div);
-    if(suggestedActions&&suggestedActions.actions&&suggestedActions.actions.length) setQuickReplies(suggestedActions.actions);
+    if(suggestedActions&&suggestedActions.actions&&suggestedActions.actions.length)
+      setQuickReplies(suggestedActions.actions);
     else clearQuickReplies();
   } else {
     div.innerHTML=`<div class="msg-body">${escHtml(text)}</div>`;
@@ -224,6 +301,9 @@ function setReady(ready){
   input.placeholder=ready?"اكتب رسالتك هنا...":"جارٍ الاتصال...";
 }
 
+/* ══════════════════════════════════════
+   Direct Line
+══════════════════════════════════════ */
 async function pollActivities(){
   if(!dlUrl||!conversationId||!token)return;
   try{
