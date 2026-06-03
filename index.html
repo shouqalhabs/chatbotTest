@@ -408,32 +408,110 @@ function isRTL(text){
 }
 
 function renderMarkdown(raw){
-  const LINK_MD=/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
-  const LINK_URL=/https?:\/\/[^\s<>"')\]،,،]+/g;
-  const segments=[];
-  let last=0;
-  const combined=[];
-  let m;
-  LINK_MD.lastIndex=0;
-  while((m=LINK_MD.exec(raw))!==null) combined.push({idx:m.index,len:m[0].length,type:'md',label:m[1],url:m[2]});
-  LINK_URL.lastIndex=0;
-  while((m=LINK_URL.exec(raw))!==null){
-    const inside=combined.some(c=>c.type==='md'&&m.index>=c.idx&&m.index<c.idx+c.len);
-    if(!inside) combined.push({idx:m.index,len:m[0].length,type:'url',url:m[0]});
+  // أولاً: معالجة الروابط بصيغة [text](url) المعتادة
+  const LINK_MD = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  // ثانياً: معالجة عناوين البريد الإلكتروني بصيغة [text](mailto:email) (مثل التي تظهر من البوت)
+  const MAILTO_MD = /\[([^\]]+)\]\((mailto:([^)\s]+))\)/g;
+  // ثالثاً: معالجة عناوين البريد الإلكتروني النصية العادية (مثل name@domain.com) وتحويلها إلى mailto
+  const EMAIL_PLAIN = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  // معالجة الروابط النصية العادية
+  const LINK_URL = /https?:\/\/[^\s<>"')\]،,،]+/g;
+
+  let temp = raw;
+  const mailtoSegments = [];
+  let lastIdx = 0;
+  let match;
+
+  // 1. معالجة روابط البريد الإلكتروني بصيغة [text](mailto:email)
+  MAILTO_MD.lastIndex = 0;
+  while ((match = MAILTO_MD.exec(temp)) !== null) {
+    const fullMatch = match[0];
+    const label = match[1];
+    const email = match[3];
+    mailtoSegments.push({
+      idx: match.index,
+      len: fullMatch.length,
+      type: 'mailto',
+      label: label,
+      email: email
+    });
   }
-  combined.sort((a,b)=>a.idx-b.idx);
-  for(const c of combined){
-    if(c.idx>last) segments.push({type:'text',value:raw.slice(last,c.idx)});
-    const href=c.url.replace(/[.,،؟?!:;'")\]]+$/,'');
-    const label=c.type==='md'?escHtml(c.label):escHtml(href);
-    segments.push({type:'html',value:`<a href="${escAttr(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`});
-    last=c.idx+c.len;
+
+  // 2. معالجة عناوين البريد الإلكتروني النصية العادية
+  EMAIL_PLAIN.lastIndex = 0;
+  while ((match = EMAIL_PLAIN.exec(temp)) !== null) {
+    const isInsideMailto = mailtoSegments.some(seg => match.index >= seg.idx && match.index < seg.idx + seg.len);
+    if (!isInsideMailto) {
+      mailtoSegments.push({
+        idx: match.index,
+        len: match[0].length,
+        type: 'plain-email',
+        label: match[0],
+        email: match[0]
+      });
+    }
   }
-  if(last<raw.length) segments.push({type:'text',value:raw.slice(last)});
-  const processed=segments.map(s=>{
-    if(s.type==='html') return s.value;
-    return applyMarkdown(escHtml(s.value));
-  }).join('');
+
+  // 3. معالجة الروابط العادية بصيغة [text](url)
+  const normalLinks = [];
+  LINK_MD.lastIndex = 0;
+  while ((match = LINK_MD.exec(temp)) !== null) {
+    normalLinks.push({
+      idx: match.index,
+      len: match[0].length,
+      type: 'link',
+      label: match[1],
+      url: match[2]
+    });
+  }
+
+  // 4. معالجة الروابط النصية العادية (URLs)
+  LINK_URL.lastIndex = 0;
+  while ((match = LINK_URL.exec(temp)) !== null) {
+    const isInsideMdLink = normalLinks.some(link => match.index >= link.idx && match.index < link.idx + link.len);
+    if (!isInsideMdLink) {
+      normalLinks.push({
+        idx: match.index,
+        len: match[0].length,
+        type: 'plain-url',
+        label: match[0],
+        url: match[0]
+      });
+    }
+  }
+
+  // دمج جميع العناصر وترتيبها حسب الموقع
+  const allSegments = [...mailtoSegments, ...normalLinks];
+  allSegments.sort((a, b) => a.idx - b.idx);
+
+  let result = '';
+  let currentPos = 0;
+
+  for (const seg of allSegments) {
+    if (seg.idx > currentPos) {
+      result += escHtml(temp.substring(currentPos, seg.idx));
+    }
+
+    if (seg.type === 'mailto' || seg.type === 'plain-email') {
+      // رابط بريد إلكتروني: يفتح برنامج البريد الافتراضي
+      const href = `mailto:${encodeURIComponent(seg.email)}`;
+      result += `<a href="${href}" target="_blank" rel="noopener noreferrer">${escHtml(seg.label)}</a>`;
+    } else if (seg.type === 'link') {
+      // رابط ويب عادي بصيغة Markdown
+      result += `<a href="${escAttr(seg.url)}" target="_blank" rel="noopener noreferrer">${escHtml(seg.label)}</a>`;
+    } else if (seg.type === 'plain-url') {
+      // رابط ويب نصي عادي
+      result += `<a href="${escAttr(seg.url)}" target="_blank" rel="noopener noreferrer">${escHtml(seg.label)}</a>`;
+    }
+
+    currentPos = seg.idx + seg.len;
+  }
+
+  if (currentPos < temp.length) {
+    result += escHtml(temp.substring(currentPos));
+  }
+
+  const processed = applyMarkdown(result);
   return wrapParagraphs(processed);
 }
 
